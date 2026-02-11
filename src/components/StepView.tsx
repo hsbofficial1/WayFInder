@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 import { ChevronLeft, ChevronRight, RotateCcw, CheckCircle2, HelpCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DirectionIcon from "@/components/DirectionIcon";
@@ -15,6 +16,7 @@ interface StepViewProps {
 
 const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const { language, t } = useLanguage();
   const { data: locations } = useLocations();
   const step = route.steps[currentStep];
   const total = route.steps.length;
@@ -22,6 +24,19 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   const isLast = currentStep === total - 1;
   const fromLocation = locations?.find((l) => l.id === route.from);
   const toLocation = locations?.find((l) => l.id === route.to);
+
+  const getName = (loc: any) => {
+    if (!loc) return "";
+    if (language === 'ml') return loc.name_ml || loc.name;
+    if (language === 'kn') return loc.name_kn || loc.name;
+    return loc.name;
+  };
+
+  const getInstruction = (s: any) => {
+    if (language === 'ml') return s.instruction_ml || s.instruction;
+    if (language === 'kn') return s.instruction_kn || s.instruction;
+    return s.instruction;
+  };
 
   return (
     <div className="flex flex-col min-h-[calc(100dvh-4rem)]">
@@ -33,7 +48,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
           </button>
           <div className="text-center">
             <p className="text-xs text-muted-foreground font-medium">
-              {fromLocation?.name || route.from} → {toLocation?.name || route.to}
+              {getName(fromLocation) || route.from} → {getName(toLocation) || route.to}
             </p>
           </div>
           <div className="w-8" />
@@ -67,12 +82,12 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
 
           {/* Step counter */}
           <p className="text-sm font-semibold text-primary">
-            Step {currentStep + 1} of {total}
+            {t('step_counter')} {currentStep + 1} {t('of')} {total}
           </p>
 
           {/* Instruction */}
           <p className="text-xl font-bold leading-relaxed text-foreground max-w-xs mx-auto">
-            {step.instruction}
+            {getInstruction(step)}
           </p>
 
           {/* Landmark Panorama/Image */}
@@ -99,7 +114,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
           <div className="space-y-3">
             <div className="flex items-center justify-center gap-2 text-success font-semibold py-3">
               <CheckCircle2 size={24} />
-              <span>You've arrived!</span>
+              <span>{t('arrived')}</span>
             </div>
             <Button
               onClick={onRestart}
@@ -107,7 +122,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
               className="w-full h-14 text-base rounded-xl gap-2"
             >
               <RotateCcw size={18} />
-              Navigate Somewhere Else
+              {t('navigate_elsewhere')}
             </Button>
           </div>
         ) : (
@@ -119,13 +134,13 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
               className="h-14 px-6 text-base rounded-xl"
             >
               <ChevronLeft size={20} />
-              Back
+              {t('back')}
             </Button>
             <Button
               onClick={() => setCurrentStep((s) => s + 1)}
               className="flex-1 h-14 text-base rounded-xl font-semibold gap-2"
             >
-              Next Step
+              {t('next_step')}
               <ChevronRight size={20} />
             </Button>
           </div>

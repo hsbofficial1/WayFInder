@@ -78,7 +78,15 @@ graph.addEdge("lift-2", "desk-area", 10, "walk");
 graph.addEdge("staircase-2", "desk-area", 15, "walk");
 
 // Define Landmarks & Visual Cues
-const landmarks: Record<string, { label: string; cue: string; image?: string }> = {
+const landmarks: Record<string, {
+    label: string;
+    label_ml?: string;
+    label_kn?: string;
+    cue: string;
+    cue_ml?: string;
+    cue_kn?: string;
+    image?: string
+}> = {
     // Ground Floor
     "main-gate": {
         label: "Main Entrance",
@@ -97,7 +105,11 @@ const landmarks: Record<string, { label: string; cue: string; image?: string }> 
     },
     "cafeteria": {
         label: "Cafeteria",
+        label_ml: "കഫറ്റീരിയ",
+        label_kn: "cafeteria",
         cue: "the glass doors smelling of fresh coffee",
+        cue_ml: "പുതിയ കാപ്പിയുടെ മണമുള്ള ഗ്ലാസ് വാതിലുകൾ",
+        cue_kn: "ತಾಜಾ ಕಾಫಿಯ ವಾಸನೆ ಬರುವ ಗಾಜಿನ ಬಾಗಿಲುಗಳು",
         image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop&q=60"
     },
     "staircase-g": { label: "Ground Floor Stairs", cue: "the wide staircase with metal railings" },
@@ -132,6 +144,8 @@ const landmarks: Record<string, { label: string; cue: string; image?: string }> 
 
 export interface RouteStep {
     instruction: string;
+    instruction_ml?: string;
+    instruction_kn?: string;
     icon_type: string;
     floor?: number;
     landmarkImage?: string;
@@ -147,6 +161,8 @@ export const findGraphRoute = (fromId: string, toId: string) => {
     const startLoc = landmarks[fromId] || { label: fromId, cue: "the starting point", image: undefined };
     steps.push({
         instruction: `Start at ${startLoc.label}, near ${startLoc.cue}.`,
+        instruction_ml: `${startLoc.label_ml || startLoc.label}-ൽ നിന്ന് ആരംഭിക്കുക.`,
+        instruction_kn: `${startLoc.label_kn || startLoc.label} ನಿಂದ ಪ್ರಾರಂಭಿಸಿ.`,
         icon_type: "start",
         floor: coordinates[fromId]?.floor,
         landmarkImage: startLoc.image
@@ -209,8 +225,14 @@ export const findGraphRoute = (fromId: string, toId: string) => {
 
         // Add movement step
         if (instruction) {
+            // Simple translation logic (expand as needed)
+            const instruction_ml = generateInstructionML(instruction, icon, currLandmark, nextLandmark, p3?.floor);
+            const instruction_kn = generateInstructionKN(instruction, icon, currLandmark, nextLandmark, p3?.floor);
+
             steps.push({
                 instruction,
+                instruction_ml,
+                instruction_kn,
                 icon_type: icon,
                 floor: p2.floor,
                 landmarkImage: stepImage
@@ -221,6 +243,8 @@ export const findGraphRoute = (fromId: string, toId: string) => {
         if (i + 1 === pathIds.length - 1) {
             steps.push({
                 instruction: `You have reached ${nextLandmark.label}! It is right there by ${nextLandmark.cue}.`,
+                instruction_ml: `നിങ്ങൾ ${nextLandmark.label_ml || nextLandmark.label}-ൽ എത്തിച്ചേർന്നു!`,
+                instruction_kn: `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${nextLandmark.label_kn || nextLandmark.label} ತಲಪಿದೆ!`,
                 icon_type: "destination",
                 floor: p3.floor,
                 landmarkImage: nextLandmark.image
@@ -230,3 +254,33 @@ export const findGraphRoute = (fromId: string, toId: string) => {
 
     return { path: pathIds, steps };
 };
+
+function generateInstructionML(base: string, icon: string, curr: any, next: any, floor?: number) {
+    // Very basic mapping based on icon type
+    const cl = curr.label_ml || curr.label;
+    const nl = next.label_ml || next.label;
+
+    if (icon === "start") return `${cl}-ൽ നിന്ന് ആരംഭിക്കുക.`;
+    if (icon === "destination") return `നിങ്ങൾ ${nl}-ൽ എത്തിച്ചേർന്നു!`;
+    if (icon === "left") return `${cl}-ൽ നിന്ന് ഇടത്തോട്ട് തിരിയുക.`;
+    if (icon === "right") return `${cl}-ൽ നിന്ന് വലത്തോട്ട് തിരിയുക.`;
+    if (icon === "straight") return `${cl} വഴി നേരെ നടക്കുക.`;
+    if (icon.includes("stairs")) return `${floor}-ാം നിലയിലേക്ക് പടികൾ കയറുക.`;
+    if (icon.includes("lift")) return `${floor}-ാം നിലയിലേക്ക് ലിഫ്റ്റ് എടുക്കുക.`;
+    return base; // Fallback
+}
+
+function generateInstructionKN(base: string, icon: string, curr: any, next: any, floor?: number) {
+    // Very basic mapping based on icon type
+    const cl = curr.label_kn || curr.label;
+    const nl = next.label_kn || next.label;
+
+    if (icon === "start") return `${cl} ನಿಂದ ಪ್ರಾರಂಭಿಸಿ.`;
+    if (icon === "destination") return `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${nl} ತಲುಪಿದೆ!`;
+    if (icon === "left") return `${cl} ನಲ್ಲಿ ಎಡಕ್ಕೆ ತಿರುಗಿ.`;
+    if (icon === "right") return `${cl} ನಲ್ಲಿ ಬಲಕ್ಕೆ ತಿರುಗಿ.`;
+    if (icon === "straight") return `${cl} ಮೂಲಕ ನೇರವಾಗಿ ನಡೆಯಿರಿ.`;
+    if (icon.includes("stairs")) return `${floor} ನೇ ಮಹಡಿಗೆ ಮೆಟ್ಟಿಲುಗಳನ್ನು ಬಳಸಿ.`;
+    if (icon.includes("lift")) return `${floor} ನೇ ಮಹಡಿಗೆ ಲಿಫ್ಟ್ ತೆಗೆದುಕೊಳ್ಳಿ.`;
+    return base; // Fallback
+}

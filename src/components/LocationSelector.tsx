@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 import { Check, ChevronsUpDown, Search, MapPin, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,13 @@ const LocationSelector = ({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const { data: locations, isLoading } = useLocations();
+  const { language, t } = useLanguage();
+
+  const getName = (loc: any) => {
+    if (language === 'ml') return loc.name_ml || loc.name;
+    if (language === 'kn') return loc.name_kn || loc.name;
+    return loc.name;
+  };
 
   const selectedLocation = locations?.find((l) => l.id === value);
 
@@ -46,8 +54,9 @@ const LocationSelector = ({
       if (excludeId && l.id === excludeId) return false;
       if (search) {
         const query = search.toLowerCase();
+        const name = getName(l).toLowerCase();
         return (
-          l.name.toLowerCase().includes(query) ||
+          name.includes(query) ||
           locationTypeLabels[l.type].toLowerCase().includes(query)
         );
       }
@@ -114,7 +123,7 @@ const LocationSelector = ({
                 {selectedLocation ? (
                   <div className="flex flex-col">
                     <span className="text-lg font-semibold truncate leading-tight">
-                      {selectedLocation.name}
+                      {getName(selectedLocation)}
                     </span>
                     <span className="text-xs text-muted-foreground truncate">
                       {getFloorLabel(selectedLocation.floor)} • {locationTypeLabels[selectedLocation.type]}
@@ -139,7 +148,7 @@ const LocationSelector = ({
             <div className="relative">
               <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Search places..."
+                placeholder={t('search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-12 pl-10 rounded-xl text-base bg-muted/50 border-none focus-visible:ring-1"
@@ -186,7 +195,7 @@ const LocationSelector = ({
                             <MapPin size={24} />
                           </div>
                           <div className="flex-1">
-                            <div className="font-bold text-lg">{location.name}</div>
+                            <div className="font-bold text-lg">{getName(location)}</div>
                             <div className="text-sm text-muted-foreground">
                               {locationTypeLabels[location.type]}
                             </div>

@@ -3,19 +3,21 @@ export type LocationType = "entry" | "room" | "lab" | "office" | "hotspot" | "ut
 export interface Location {
   id: string;
   name: string;
+  name_ml?: string;
+  name_kn?: string;
   floor: number;
   type: LocationType;
 }
 
 export const locations: Location[] = [
   // Ground Floor - Entry Points
-  { id: "main-gate", name: "Main Gate", floor: 0, type: "entry" },
-  { id: "reception", name: "Reception Desk", floor: 0, type: "entry" },
+  { id: "main-gate", name: "Main Gate", name_ml: "പ്രധാന കവാടം", name_kn: "ಮುಖ್ಯ ದ್ವಾರ", floor: 0, type: "entry" },
+  { id: "reception", name: "Reception Desk", name_ml: "റിസപ്ഷൻ ഡെസ്ക്", name_kn: "ಸ್ವಾಗತ ಕೇಂದ್ರ", floor: 0, type: "entry" },
   { id: "lobby", name: "Main Lobby", floor: 0, type: "entry" },
   { id: "staircase-g", name: "Staircase (Ground)", floor: 0, type: "utility" },
   { id: "lift-g", name: "Lift (Ground)", floor: 0, type: "utility" },
-  { id: "washroom-g", name: "Washroom (Ground)", floor: 0, type: "utility" },
-  { id: "cafeteria", name: "Cafeteria", floor: 0, type: "hotspot" },
+  { id: "washroom-g", name: "Washroom (Ground)", name_ml: "ശുചിമുറി (താഴത്തെ നില)", name_kn: "ಶೌಚಾಲಯ (ನೆಲ)", floor: 0, type: "utility" },
+  { id: "cafeteria", name: "Cafeteria", name_ml: "കഫറ്റീരിയ", name_kn: "cafeteria", floor: 0, type: "hotspot" },
   { id: "meeting-room-1", name: "Meeting Room 1", floor: 0, type: "room" },
 
   // First Floor

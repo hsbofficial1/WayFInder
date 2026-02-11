@@ -5,6 +5,8 @@ export interface RouteStep {
   icon: IconType;
   floor?: number;
   landmarkImage?: string;
+  instruction_ml?: string;
+  instruction_kn?: string;
 }
 
 export interface Route {
@@ -21,6 +23,8 @@ export const routes: Route[] = [
     steps: [
       {
         instruction: "You are at the Main Gate. Walk straight ahead.",
+        instruction_ml: "നിങ്ങൾ പ്രധാന കവാടത്തിലാണ്. നേരെ മുന്നോട്ട് നടക്കുക.",
+        instruction_kn: "ನೀವು ಮುಖ್ಯ ದ್ವಾರದಲ್ಲಿದ್ದೀರಿ. ನೇರವಾಗಿ ಮುಂದೆ ನಡೆಯಿರಿ.",
         icon: "start",
         floor: 0,
         landmarkImage: "https://images.unsplash.com/photo-1590483259885-bc5c99e90099?w=800&auto=format&fit=crop&q=60" // Placeholder for entrance view

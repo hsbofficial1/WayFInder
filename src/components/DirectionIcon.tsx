@@ -31,29 +31,33 @@ const labelMap: Record<IconType, string> = {
   start: "Start",
 };
 
+import { useLanguage } from "@/context/LanguageContext";
+
 const DirectionIcon = ({ type, size = 32, className = "" }: DirectionIconProps) => {
+  const { t } = useLanguage();
   const Icon = iconMap[type];
   const isDestination = type === "destination";
   const isStart = type === "start";
 
+  const label = t(`icon_${type.replace(/-/g, '_')}`);
+
   return (
     <div
       className={`flex flex-col items-center gap-1 ${className}`}
-      aria-label={labelMap[type]}
+      aria-label={label}
     >
       <div
-        className={`rounded-2xl p-3 ${
-          isDestination
+        className={`rounded-2xl p-3 ${isDestination
             ? "bg-success text-success-foreground"
             : isStart
-            ? "bg-accent text-accent-foreground"
-            : "bg-direction-bg text-direction-active"
-        }`}
+              ? "bg-accent text-accent-foreground"
+              : "bg-direction-bg text-direction-active"
+          }`}
       >
         <Icon size={size} strokeWidth={2.5} />
       </div>
       <span className="text-xs font-medium text-muted-foreground">
-        {labelMap[type]}
+        {label}
       </span>
     </div>
   );

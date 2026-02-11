@@ -18,8 +18,11 @@ import LocationSelector from "@/components/LocationSelector";
 import StepView from "@/components/StepView";
 import { useFindRoute, useLocations, type RouteWithSteps, type Location } from "@/hooks/useNavigation";
 import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/context/LanguageContext";
 
 const Index = () => {
+  const { t } = useLanguage();
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [searchTriggered, setSearchTriggered] = useState(false);
@@ -114,6 +117,9 @@ const Index = () => {
             <h1 className="text-2xl font-bold text-foreground tracking-tight">WayFinder</h1>
             <p className="text-sm text-muted-foreground font-medium">Indoor Navigation</p>
           </div>
+          <div className="ml-auto">
+            <LanguageSwitcher />
+          </div>
         </div>
       </header>
 
@@ -122,10 +128,10 @@ const Index = () => {
         <div className="space-y-6">
           <div className="space-y-1">
             <h2 className="text-2xl font-bold text-foreground">
-              Where to?
+              {t('where_to')}
             </h2>
             <p className="text-muted-foreground">
-              Select your path to start guiding.
+              {t('select_path_msg')}
             </p>
           </div>
 
@@ -134,8 +140,8 @@ const Index = () => {
               <LocationSelector
                 value={from}
                 onChange={(v) => { setFrom(v); setError(""); setSearchTriggered(false); }}
-                label="Start Point"
-                placeholder="Select current location"
+                label={t('start_point')}
+                placeholder={t('select_start')}
                 icon={<MapPin size={24} />}
               />
 
@@ -146,8 +152,8 @@ const Index = () => {
             <LocationSelector
               value={to}
               onChange={(v) => { setTo(v); setError(""); setSearchTriggered(false); }}
-              label="Destination"
-              placeholder="Select destination"
+              label={t('destination')}
+              placeholder={t('select_destination')}
               excludeId={from}
               icon={<Target size={24} />}
             />
@@ -199,7 +205,7 @@ const Index = () => {
             ) : (
               <Navigation size={24} className="fill-current" />
             )}
-            {isSearching ? "Finding Route..." : "Start Navigation"}
+            {isSearching ? "Finding Route..." : t('start_navigation')}
           </Button>
         </div>
 
