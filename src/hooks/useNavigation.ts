@@ -45,11 +45,38 @@ export interface RouteWithSteps {
   steps: RouteStep[];
 }
 
+// Import local graph logic
+import { findGraphRoute } from "@/data/graphData";
+
 export function useFindRoute(from: string, to: string, enabled: boolean) {
   return useQuery({
     queryKey: ["route", from, to],
     queryFn: async (): Promise<RouteWithSteps | null> => {
-      // Find the route
+      // 1. Try local graph generation first
+      // This allows dynamic routing between ANY points without manually creating DB entries
+      const graphResult = findGraphRoute(from, to);
+
+      if (graphResult) {
+        // Map local result to match the Supabase shape expected by UI
+        const steps: RouteStep[] = graphResult.steps.map((step, index) => ({
+          id: `local-step-${index}`,
+          route_id: "local-route",
+          step_order: index,
+          instruction: step.instruction,
+          icon_type: step.icon_type,
+          floor: step.floor ?? 0,
+          created_at: new Date().toISOString(),
+        }));
+
+        return {
+          id: "local-generated-route",
+          from,
+          to,
+          steps,
+        };
+      }
+
+      // 2. Fallback to Supabase if no local path found (e.g. islands in graph)
       const { data: route, error: routeError } = await supabase
         .from("routes")
         .select("*")
