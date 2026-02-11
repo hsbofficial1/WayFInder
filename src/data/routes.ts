@@ -4,6 +4,7 @@ export interface RouteStep {
   instruction: string;
   icon: IconType;
   floor?: number;
+  landmarkImage?: string;
 }
 
 export interface Route {
@@ -18,9 +19,24 @@ export const routes: Route[] = [
     from: "main-gate",
     to: "reception",
     steps: [
-      { instruction: "You are at the Main Gate. Walk straight ahead.", icon: "start", floor: 0 },
-      { instruction: "Go straight for about 15 steps through the entrance corridor.", icon: "straight", floor: 0 },
-      { instruction: "The Reception Desk is directly ahead on your right.", icon: "destination", floor: 0 },
+      {
+        instruction: "You are at the Main Gate. Walk straight ahead.",
+        icon: "start",
+        floor: 0,
+        landmarkImage: "https://images.unsplash.com/photo-1590483259885-bc5c99e90099?w=800&auto=format&fit=crop&q=60" // Placeholder for entrance view
+      },
+      {
+        instruction: "Go straight for about 15 steps through the entrance corridor.",
+        icon: "straight",
+        floor: 0,
+        landmarkImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&auto=format&fit=crop&q=60" // Placeholder for corridor
+      },
+      {
+        instruction: "The Reception Desk is directly ahead on your right.",
+        icon: "destination",
+        floor: 0,
+        landmarkImage: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&auto=format&fit=crop&q=60" // Placeholder for reception
+      },
     ],
   },
   // Main Gate → Cafeteria

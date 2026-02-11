@@ -69,6 +69,7 @@ export function useFindRoute(from: string, to: string, enabled: boolean) {
       instruction: step.instruction,
       icon: step.icon_type as any, // Cast because defined type in graphData might differ slightly from routes.ts
       floor: step.floor ?? 0,
+      landmarkImage: step.landmarkImage,
     }));
 
     return {

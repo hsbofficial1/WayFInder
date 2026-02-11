@@ -75,6 +75,17 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
             {step.instruction}
           </p>
 
+          {/* Landmark Panorama/Image */}
+          {step.landmarkImage && (
+            <div className="w-full rounded-lg overflow-hidden shadow-md my-2 border border-border/50">
+              <img
+                src={step.landmarkImage}
+                alt="Landmark view"
+                className="w-full h-48 object-cover transition-transform hover:scale-105 duration-500"
+              />
+            </div>
+          )}
+
           {/* Floor map */}
           {step.floor !== null && step.floor !== undefined && (
             <FloorMap floor={step.floor} />

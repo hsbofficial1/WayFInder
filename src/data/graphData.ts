@@ -78,12 +78,28 @@ graph.addEdge("lift-2", "desk-area", 10, "walk");
 graph.addEdge("staircase-2", "desk-area", 15, "walk");
 
 // Define Landmarks & Visual Cues
-const landmarks: Record<string, { label: string; cue: string }> = {
+const landmarks: Record<string, { label: string; cue: string; image?: string }> = {
     // Ground Floor
-    "main-gate": { label: "Main Entrance", cue: "the glass automatic doors" },
-    "reception": { label: "Reception Desk", cue: "the large wooden desk with the 'Information' sign" },
-    "lobby": { label: "Main Lobby", cue: "the waiting area with blue sofas" },
-    "cafeteria": { label: "Cafeteria", cue: "the glass doors smelling of fresh coffee" },
+    "main-gate": {
+        label: "Main Entrance",
+        cue: "the glass automatic doors",
+        image: "https://images.unsplash.com/photo-1590483259885-bc5c99e90099?w=800&auto=format&fit=crop&q=60"
+    },
+    "reception": {
+        label: "Reception Desk",
+        cue: "the large wooden desk with the 'Information' sign",
+        image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&auto=format&fit=crop&q=60"
+    },
+    "lobby": {
+        label: "Main Lobby",
+        cue: "the waiting area with blue sofas",
+        image: "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=800&auto=format&fit=crop&q=60"
+    },
+    "cafeteria": {
+        label: "Cafeteria",
+        cue: "the glass doors smelling of fresh coffee",
+        image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop&q=60"
+    },
     "staircase-g": { label: "Ground Floor Stairs", cue: "the wide staircase with metal railings" },
     "lift-g": { label: "Ground Floor Lifts", cue: "the silver elevator doors" },
     "washroom-g": { label: "Ground Floor Restroom", cue: "the white door with a hygiene sign" },
@@ -105,7 +121,11 @@ const landmarks: Record<string, { label: string; cue: string }> = {
     "lift-2": { label: "2nd Floor Lifts", cue: "the elevator area with a directory sign" },
     "corridor-2": { label: "Upper Corridor", cue: "the hallway with overhead skylights" },
     "server-room": { label: "Server Room", cue: "the secure metal door with a keypad" },
-    "conference-hall": { label: "Conference Hall", cue: "the large double oak doors" },
+    "conference-hall": {
+        label: "Conference Hall",
+        cue: "the large double oak doors",
+        image: "https://images.unsplash.com/photo-1431540015161-0bf868a2d407?w=800&auto=format&fit=crop&q=60"
+    },
     "desk-area": { label: "Open Desk Area", cue: "the open workspace with hanging plants" },
     "washroom-2": { label: "2nd Floor Restroom", cue: "the facility door" },
 };
@@ -114,6 +134,7 @@ export interface RouteStep {
     instruction: string;
     icon_type: string;
     floor?: number;
+    landmarkImage?: string;
 }
 
 export const findGraphRoute = (fromId: string, toId: string) => {
@@ -123,11 +144,12 @@ export const findGraphRoute = (fromId: string, toId: string) => {
     const steps: RouteStep[] = [];
 
     // Initial instruction
-    const startLoc = landmarks[fromId] || { label: fromId, cue: "the starting point" };
+    const startLoc = landmarks[fromId] || { label: fromId, cue: "the starting point", image: undefined };
     steps.push({
         instruction: `Start at ${startLoc.label}, near ${startLoc.cue}.`,
         icon_type: "start",
-        floor: coordinates[fromId]?.floor
+        floor: coordinates[fromId]?.floor,
+        landmarkImage: startLoc.image
     });
 
     for (let i = 0; i < pathIds.length - 1; i++) {
@@ -139,11 +161,12 @@ export const findGraphRoute = (fromId: string, toId: string) => {
         const p2 = coordinates[curr]; // Current point
         const p3 = coordinates[next]; // Next point
 
-        const currLandmark = landmarks[curr] || { label: curr, cue: "the area" };
-        const nextLandmark = landmarks[next] || { label: next, cue: "the area" };
+        const currLandmark = landmarks[curr] || { label: curr, cue: "the area", image: undefined };
+        const nextLandmark = landmarks[next] || { label: next, cue: "the area", image: undefined };
 
         let instruction = "";
         let icon = "straight";
+        let stepImage: string | undefined = undefined;
 
         // Check floor change
         if (p2.floor !== p3.floor) {
@@ -153,11 +176,14 @@ export const findGraphRoute = (fromId: string, toId: string) => {
 
             icon = isLift ? (direction === "up" ? "lift-up" : "lift-down") : (direction === "up" ? "stairs-up" : "stairs-down");
             instruction = `Take the ${currLandmark.label} ${direction} to Floor ${p3.floor}. Look for ${isLift ? "the button panel" : "the handrail"}.`;
+            stepImage = currLandmark.image;
 
         } else {
             // Same floor logic
             if (p1 && p1.floor === p2.floor) {
                 const turnDir = graph.getTurnDirection(p1, p2, p3);
+
+                stepImage = currLandmark.image;
 
                 if (turnDir === "left") {
                     icon = "left";
@@ -173,15 +199,22 @@ export const findGraphRoute = (fromId: string, toId: string) => {
             } else if (!prev) {
                 // First step from start
                 instruction = `Walk towards ${nextLandmark.label}. Look out for ${nextLandmark.cue}.`;
+                stepImage = nextLandmark.image;
             } else {
                 // Just arrived at floor from stairs/lift
                 instruction = `Exit the ${currLandmark.label} and proceed towards ${nextLandmark.label}.`;
+                stepImage = currLandmark.image;
             }
         }
 
         // Add movement step
         if (instruction) {
-            steps.push({ instruction, icon_type: icon, floor: p2.floor });
+            steps.push({
+                instruction,
+                icon_type: icon,
+                floor: p2.floor,
+                landmarkImage: stepImage
+            });
         }
 
         // Destination Arrival
@@ -189,7 +222,8 @@ export const findGraphRoute = (fromId: string, toId: string) => {
             steps.push({
                 instruction: `You have reached ${nextLandmark.label}! It is right there by ${nextLandmark.cue}.`,
                 icon_type: "destination",
-                floor: p3.floor
+                floor: p3.floor,
+                landmarkImage: nextLandmark.image
             });
         }
     }
