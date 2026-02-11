@@ -1,8 +1,9 @@
 import floor0 from "@/assets/floor-0.png";
 import floor1 from "@/assets/floor-1.png";
 import floor2 from "@/assets/floor-2.png";
+import { useNavigationContext } from "@/context/NavigationContext";
 
-const floorMaps: Record<number, string> = {
+const defaultFloorMaps: Record<number, string> = {
   0: floor0,
   1: floor1,
   2: floor2,
@@ -13,7 +14,11 @@ interface FloorMapProps {
 }
 
 const FloorMap = ({ floor }: FloorMapProps) => {
-  const src = floorMaps[floor];
+  const { floorMaps } = useNavigationContext();
+
+  // Use uploaded map if available, otherwise default
+  const src = floorMaps[floor] || defaultFloorMaps[floor];
+
   if (!src) return null;
 
   return (

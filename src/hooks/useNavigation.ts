@@ -1,10 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
-
-export type Location = Tables<"locations">;
-export type RouteRow = Tables<"routes">;
-export type RouteStep = Tables<"route_steps">;
+// Re-export types
+export type { Location } from "@/data/locations";
+export type { Route, RouteStep } from "@/data/routes";
+import { useNavigationContext } from "@/context/NavigationContext";
+import { findGraphRoute } from "@/data/graphData";
+import { RouteStep } from "@/data/routes";
 
 export type LocationType = "entry" | "room" | "lab" | "office" | "hotspot" | "utility";
 
@@ -23,19 +22,8 @@ export const getFloorLabel = (floor: number) => {
 };
 
 export function useLocations() {
-  return useQuery({
-    queryKey: ["locations"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("locations")
-        .select("*")
-        .order("floor")
-        .order("name");
-      if (error) throw error;
-      return data as Location[];
-    },
-    staleTime: Infinity, // locations rarely change
-  });
+  const { locations } = useNavigationContext();
+  return { data: locations, isLoading: false };
 }
 
 export interface RouteWithSteps {
@@ -45,65 +33,54 @@ export interface RouteWithSteps {
   steps: RouteStep[];
 }
 
-// Import local graph logic
-import { findGraphRoute } from "@/data/graphData";
-
 export function useFindRoute(from: string, to: string, enabled: boolean) {
-  return useQuery({
-    queryKey: ["route", from, to],
-    queryFn: async (): Promise<RouteWithSteps | null> => {
-      // 1. Try local graph generation first
-      // This allows dynamic routing between ANY points without manually creating DB entries
-      const graphResult = findGraphRoute(from, to);
+  const { routes } = useNavigationContext();
 
-      if (graphResult) {
-        // Map local result to match the Supabase shape expected by UI
-        const steps: RouteStep[] = graphResult.steps.map((step, index) => ({
-          id: `local-step-${index}`,
-          route_id: "local-route",
-          step_order: index,
-          instruction: step.instruction,
-          icon_type: step.icon_type,
-          floor: step.floor ?? 0,
-          created_at: new Date().toISOString(),
-        }));
+  // We wrap this in a "query-like" object or just use simple execution
+  // Since original code used useQuery, we can mock it or just useMemo if we want re-renders on route change.
+  // However, existing consumers expect a query result object.
+  // We can stick to a simple hook return or useQuery for consistency if we wanted async, but sync is fine.
 
-        return {
-          id: "local-generated-route",
-          from,
-          to,
-          steps,
-        };
-      }
+  // Actually, let's just compute it.
 
-      // 2. Fallback to Supabase if no local path found (e.g. islands in graph)
-      const { data: route, error: routeError } = await supabase
-        .from("routes")
-        .select("*")
-        .eq("from_location_id", from)
-        .eq("to_location_id", to)
-        .maybeSingle();
+  if (!enabled || !from || !to) {
+    return { data: null, isLoading: false };
+  }
 
-      if (routeError) throw routeError;
-      if (!route) return null;
+  // 1. Try Manual Route from Context (Admin overrides)
+  const manualRoute = routes.find(r => r.from === from && r.to === to);
+  if (manualRoute) {
+    return {
+      data: {
+        id: `manual-${from}-${to}`,
+        from,
+        to,
+        steps: manualRoute.steps
+      },
+      isLoading: false
+    };
+  }
 
-      // Get steps
-      const { data: steps, error: stepsError } = await supabase
-        .from("route_steps")
-        .select("*")
-        .eq("route_id", route.id)
-        .order("step_order");
+  // 2. Try Graph Route (Codebase logic)
+  const graphResult = findGraphRoute(from, to);
+  if (graphResult) {
+    // Map graph steps to RouteStep
+    const steps: RouteStep[] = graphResult.steps.map((step) => ({
+      instruction: step.instruction,
+      icon: step.icon_type as any, // Cast because defined type in graphData might differ slightly from routes.ts
+      floor: step.floor ?? 0,
+    }));
 
-      if (stepsError) throw stepsError;
+    return {
+      data: {
+        id: "local-generated-route",
+        from,
+        to,
+        steps,
+      },
+      isLoading: false
+    };
+  }
 
-      return {
-        id: route.id,
-        from: route.from_location_id,
-        to: route.to_location_id,
-        steps: steps || [],
-      };
-    },
-    enabled,
-    staleTime: Infinity,
-  });
+  return { data: null, isLoading: false };
 }
