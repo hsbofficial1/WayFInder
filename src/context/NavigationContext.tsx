@@ -29,7 +29,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Initialize from LocalStorage or Defaults
     useEffect(() => {
         const storedLocations = localStorage.getItem("locations");
-        const storedRoutes = localStorage.getItem("routes");
+        const storedRoutes = localStorage.getItem("routes_v2");
         const storedMaps = localStorage.getItem("floorMaps");
 
         if (storedLocations) {
@@ -57,7 +57,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }, [locations]);
 
     useEffect(() => {
-        if (routes.length > 0) localStorage.setItem("routes", JSON.stringify(routes));
+        if (routes.length > 0) localStorage.setItem("routes_v2", JSON.stringify(routes));
     }, [routes]);
 
     useEffect(() => {

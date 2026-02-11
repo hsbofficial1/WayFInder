@@ -7,6 +7,7 @@ import FloorMap from "@/components/FloorMap";
 import { getFloorLabel, type RouteWithSteps } from "@/hooks/useNavigation";
 import { useLocations } from "@/hooks/useNavigation";
 import type { IconType } from "@/data/routes";
+import PanoramaViewer from "@/components/PanoramaViewer";
 
 interface StepViewProps {
   route: RouteWithSteps;
@@ -93,18 +94,16 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
           {/* Landmark Panorama/Image */}
           {step.landmarkImage && (
             <div className="w-full rounded-lg overflow-hidden shadow-md my-2 border border-border/50">
-              <img
-                src={step.landmarkImage}
-                alt="Landmark view"
-                className="w-full h-48 object-cover transition-transform hover:scale-105 duration-500"
+              <PanoramaViewer
+                key={step.landmarkImage} // Reset when image changes
+                imageSrc={step.landmarkImage}
+                className="w-full h-64 object-cover" // Increased height slightly for better view
+                initialZoom={110} // Slight zoom for "inside" feel
               />
             </div>
           )}
 
-          {/* Floor map */}
-          {step.floor !== null && step.floor !== undefined && (
-            <FloorMap floor={step.floor} />
-          )}
+          {/* Floor map removed as per request */}
         </div>
       </div>
 

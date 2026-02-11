@@ -91,17 +91,17 @@ const landmarks: Record<string, {
     "main-gate": {
         label: "Main Entrance",
         cue: "the glass automatic doors",
-        image: "https://images.unsplash.com/photo-1590483259885-bc5c99e90099?w=800&auto=format&fit=crop&q=60"
+        image: "/assets/panoramas/main-gate.jpg"
     },
     "reception": {
         label: "Reception Desk",
         cue: "the large wooden desk with the 'Information' sign",
-        image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&auto=format&fit=crop&q=60"
+        image: "/assets/panoramas/reception.jpg"
     },
     "lobby": {
         label: "Main Lobby",
         cue: "the waiting area with blue sofas",
-        image: "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=800&auto=format&fit=crop&q=60"
+        image: "/assets/panoramas/lobby.jpg"
     },
     "cafeteria": {
         label: "Cafeteria",
@@ -110,7 +110,7 @@ const landmarks: Record<string, {
         cue: "the glass doors smelling of fresh coffee",
         cue_ml: "പുതിയ കാപ്പിയുടെ മണമുള്ള ഗ്ലാസ് വാതിലുകൾ",
         cue_kn: "ತಾಜಾ ಕಾಫಿಯ ವಾಸನೆ ಬರುವ ಗಾಜಿನ ಬಾಗಿಲುಗಳು",
-        image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop&q=60"
+        image: "/assets/panoramas/cafeteria.jpg"
     },
     "staircase-g": { label: "Ground Floor Stairs", cue: "the wide staircase with metal railings" },
     "lift-g": { label: "Ground Floor Lifts", cue: "the silver elevator doors" },
@@ -120,10 +120,18 @@ const landmarks: Record<string, {
     // 1st Floor
     "staircase-1": { label: "1st Floor Stairs Landing", cue: "the landing with a fire extinguisher" },
     "lift-1": { label: "1st Floor Lifts", cue: "the elevator lobby with a plant" },
-    "corridor-1": { label: "Main Corridor Junction", cue: "the hallway junction near the water cooler" },
+    "corridor-1": {
+        label: "Main Corridor Junction",
+        cue: "the hallway junction near the water cooler",
+        image: "/assets/panoramas/hall.jpg"
+    },
     "lab-a": { label: "Computer Lab A", cue: "the double doors labeled 'Computer Lab'" },
     "lab-b": { label: "Physics Lab B", cue: "the door with the 'Safety First' poster" },
-    "office-101": { label: "Office 101", cue: "the corner office with a wooden door" },
+    "office-101": {
+        label: "Office 101",
+        cue: "the corner office with a wooden door",
+        image: "/assets/panoramas/reception.jpg"
+    },
     "office-102": { label: "Office 102", cue: "the office next to the large window" },
     "washroom-1": { label: "1st Floor Restroom", cue: "the blue door" },
     "break-room": { label: "Break Room", cue: "the room with the vending machine visible" },
@@ -136,7 +144,7 @@ const landmarks: Record<string, {
     "conference-hall": {
         label: "Conference Hall",
         cue: "the large double oak doors",
-        image: "https://images.unsplash.com/photo-1431540015161-0bf868a2d407?w=800&auto=format&fit=crop&q=60"
+        image: "https://images.unsplash.com/photo-1517502884422-41e157d44355?auto=format&fit=crop&w=2000&q=80" // Hall View
     },
     "desk-area": { label: "Open Desk Area", cue: "the open workspace with hanging plants" },
     "washroom-2": { label: "2nd Floor Restroom", cue: "the facility door" },
