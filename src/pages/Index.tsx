@@ -1,11 +1,5 @@
 import { useState, type ReactNode } from "react";
-// ... imports ...
 
-// ... inside the file ...
-
-// Helper Components
-const QuickBtn = ({ icon, label, onClick }: { icon: ReactNode, label: string, onClick: () => void }) => (
-// ...
 import {
   Navigation,
   AlertCircle,

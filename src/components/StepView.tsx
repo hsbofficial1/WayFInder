@@ -62,7 +62,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
 
           {/* Direction icon */}
           <div className="flex justify-center">
-            <DirectionIcon type={step.icon_type as IconType} size={48} />
+            <DirectionIcon type={step.icon as IconType} size={48} />
           </div>
 
           {/* Step counter */}
