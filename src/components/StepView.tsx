@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, RotateCcw, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, RotateCcw, CheckCircle2, HelpCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DirectionIcon from "@/components/DirectionIcon";
 import FloorMap from "@/components/FloorMap";
@@ -10,9 +10,10 @@ import type { IconType } from "@/data/routes";
 interface StepViewProps {
   route: RouteWithSteps;
   onRestart: () => void;
+  onLost: () => void;
 }
 
-const StepView = ({ route, onRestart }: StepViewProps) => {
+const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const { data: locations } = useLocations();
   const step = route.steps[currentStep];
@@ -42,9 +43,8 @@ const StepView = ({ route, onRestart }: StepViewProps) => {
           {route.steps.map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
-                i <= currentStep ? "bg-primary" : "bg-direction-connector"
-              }`}
+              className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i <= currentStep ? "bg-primary" : "bg-direction-connector"
+                }`}
             />
           ))}
         </div>
@@ -116,6 +116,28 @@ const StepView = ({ route, onRestart }: StepViewProps) => {
             >
               Next Step
               <ChevronRight size={20} />
+            </Button>
+          </div>
+        )}
+
+        {/* Secondary Actions */}
+        {!isLast && (
+          <div className="flex gap-3 pt-2">
+            <Button
+              onClick={onLost}
+              variant="secondary"
+              className="flex-1 h-12 text-sm rounded-xl font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200"
+            >
+              <HelpCircle size={18} className="mr-2" />
+              I'm Lost
+            </Button>
+            <Button
+              onClick={onRestart}
+              variant="ghost"
+              className="flex-1 h-12 text-sm rounded-xl font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+            >
+              <XCircle size={18} className="mr-2" />
+              Restart
             </Button>
           </div>
         )}

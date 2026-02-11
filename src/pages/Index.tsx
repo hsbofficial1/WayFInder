@@ -97,8 +97,15 @@ const Index = () => {
     }
   };
 
+  const handleLost = () => {
+    setActiveRoute(null);
+    setFrom("");
+    setSearchTriggered(false);
+    setError("Please re-select your current location to update the route.");
+  };
+
   if (activeRoute) {
-    return <StepView route={activeRoute} onRestart={handleRestart} />;
+    return <StepView route={activeRoute} onRestart={handleRestart} onLost={handleLost} />;
   }
 
   return (
