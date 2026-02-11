@@ -1,13 +1,15 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { locations as initialLocations, Location } from "@/data/locations";
 import { routes as initialRoutes, Route } from "@/data/routes";
-// Import default maps to initialize if needed, though usually we can't easily "read" them as data URIs without fetching.
-// So we will just use the paths as strings. If user uploads, we use Data URI strings.
+import { floors as initialFloors, Floor } from "@/data/floors";
+import { Feedback, UsageStats } from "@/data/feedback";
 
 interface NavigationContextType {
     locations: Location[];
     routes: Route[];
+    floors: Floor[];
+    feedback: Feedback[];
+    stats: UsageStats;
     floorMaps: Record<number, string>;
     addLocation: (location: Location) => void;
     updateLocation: (id: string, location: Partial<Location>) => void;
@@ -15,7 +17,12 @@ interface NavigationContextType {
     addRoute: (route: Route) => void;
     updateRoute: (from: string, to: string, route: Route) => void;
     deleteRoute: (from: string, to: string) => void;
+    addFloor: (floor: Floor) => void;
+    updateFloor: (id: string, floor: Partial<Floor>) => void;
+    deleteFloor: (id: string) => void;
     setFloorMap: (floor: number, src: string) => void;
+    addFeedback: (fb: Omit<Feedback, "id" | "timestamp">) => void;
+    recordNavigation: (success: boolean, toId?: string) => void;
     resetToDefaults: () => void;
 }
 
@@ -24,31 +31,37 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [locations, setLocations] = useState<Location[]>([]);
     const [routes, setRoutes] = useState<Route[]>([]);
+    const [floors, setFloors] = useState<Floor[]>([]);
+    const [feedback, setFeedback] = useState<Feedback[]>([]);
+    const [stats, setStats] = useState<UsageStats>({
+        totalNavigations: 0,
+        routesFound: 0,
+        routesNotFound: 0,
+        popularDestinations: {}
+    });
     const [floorMaps, setFloorMaps] = useState<Record<number, string>>({});
 
     // Initialize from LocalStorage or Defaults
     useEffect(() => {
         const storedLocations = localStorage.getItem("locations");
-        const storedRoutes = localStorage.getItem("routes_v2");
+        const storedRoutes = localStorage.getItem("routes_v3");
+        const storedFloors = localStorage.getItem("floors");
+        const storedFeedback = localStorage.getItem("feedback");
+        const storedStats = localStorage.getItem("usageStats");
         const storedMaps = localStorage.getItem("floorMaps");
 
-        if (storedLocations) {
-            setLocations(JSON.parse(storedLocations));
-        } else {
-            setLocations(initialLocations);
-        }
+        if (storedLocations) setLocations(JSON.parse(storedLocations));
+        else setLocations(initialLocations);
 
-        if (storedRoutes) {
-            setRoutes(JSON.parse(storedRoutes));
-        } else {
-            setRoutes(initialRoutes);
-        }
+        if (storedRoutes) setRoutes(JSON.parse(storedRoutes));
+        else setRoutes(initialRoutes);
 
-        if (storedMaps) {
-            setFloorMaps(JSON.parse(storedMaps));
-        }
-        // Note: We don't have default maps as Data URIs easily accessible without fetch, 
-        // so we assume the component handles the default "asset" imports if map is missing in context.
+        if (storedFloors) setFloors(JSON.parse(storedFloors));
+        else setFloors(initialFloors);
+
+        if (storedFeedback) setFeedback(JSON.parse(storedFeedback));
+        if (storedStats) setStats(JSON.parse(storedStats));
+        if (storedMaps) setFloorMaps(JSON.parse(storedMaps));
     }, []);
 
     // Persistence Effects
@@ -57,8 +70,20 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }, [locations]);
 
     useEffect(() => {
-        if (routes.length > 0) localStorage.setItem("routes_v2", JSON.stringify(routes));
+        if (routes.length > 0) localStorage.setItem("routes_v3", JSON.stringify(routes));
     }, [routes]);
+
+    useEffect(() => {
+        if (floors.length > 0) localStorage.setItem("floors", JSON.stringify(floors));
+    }, [floors]);
+
+    useEffect(() => {
+        localStorage.setItem("feedback", JSON.stringify(feedback));
+    }, [feedback]);
+
+    useEffect(() => {
+        localStorage.setItem("usageStats", JSON.stringify(stats));
+    }, [stats]);
 
     useEffect(() => {
         if (Object.keys(floorMaps).length > 0) localStorage.setItem("floorMaps", JSON.stringify(floorMaps));
@@ -78,7 +103,6 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     const addRoute = (route: Route) => {
         setRoutes(prev => {
-            // Remove existing route if any
             const filtered = prev.filter(r => !(r.from === route.from && r.to === route.to));
             return [...filtered, route];
         });
@@ -92,23 +116,69 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setRoutes(prev => prev.filter(r => !(r.from === from && r.to === to)));
     };
 
+    const addFloor = (floor: Floor) => {
+        setFloors(prev => [...prev, floor]);
+    };
+
+    const updateFloor = (id: string, updates: Partial<Floor>) => {
+        setFloors(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+    };
+
+    const deleteFloor = (id: string) => {
+        setFloors(prev => prev.filter(f => f.id !== id));
+    };
+
     const setFloorMap = (floor: number, src: string) => {
         setFloorMaps(prev => ({ ...prev, [floor]: src }));
+    };
+
+    const addFeedback = (fb: Omit<Feedback, "id" | "timestamp">) => {
+        const newFb: Feedback = {
+            ...fb,
+            id: Math.random().toString(36).substr(2, 9),
+            timestamp: new Date().toISOString()
+        };
+        setFeedback(prev => [newFb, ...prev]);
+    };
+
+    const recordNavigation = (success: boolean, toId?: string) => {
+        setStats(prev => {
+            const newStats = { ...prev };
+            newStats.totalNavigations += 1;
+            if (success) {
+                newStats.routesFound += 1;
+                if (toId) {
+                    newStats.popularDestinations[toId] = (newStats.popularDestinations[toId] || 0) + 1;
+                }
+            } else {
+                newStats.routesNotFound += 1;
+            }
+            return newStats;
+        });
     };
 
     const resetToDefaults = () => {
         setLocations(initialLocations);
         setRoutes(initialRoutes);
+        setFloors(initialFloors);
+        setFeedback([]);
+        setStats({
+            totalNavigations: 0,
+            routesFound: 0,
+            routesNotFound: 0,
+            popularDestinations: {}
+        });
         setFloorMaps({});
-        localStorage.removeItem("locations");
-        localStorage.removeItem("routes");
-        localStorage.removeItem("floorMaps");
+        localStorage.clear();
     };
 
     return (
         <NavigationContext.Provider value={{
             locations,
             routes,
+            floors,
+            feedback,
+            stats,
             floorMaps,
             addLocation,
             updateLocation,
@@ -116,7 +186,12 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             addRoute,
             updateRoute,
             deleteRoute,
+            addFloor,
+            updateFloor,
+            deleteFloor,
             setFloorMap,
+            addFeedback,
+            recordNavigation,
             resetToDefaults
         }}>
             {children}

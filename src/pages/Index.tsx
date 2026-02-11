@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import React, { useState, type ReactNode } from "react";
 
 import {
   Navigation,
@@ -20,6 +20,7 @@ import { useFindRoute, useLocations, type RouteWithSteps, type Location } from "
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/context/LanguageContext";
+import { useNavigationContext } from "@/context/NavigationContext";
 
 const Index = () => {
   const { t } = useLanguage();
@@ -29,7 +30,13 @@ const Index = () => {
   const [activeRoute, setActiveRoute] = useState<RouteWithSteps | null>(null);
   const [error, setError] = useState("");
 
-  const { data: locations } = useLocations();
+  const { recordNavigation, floors } = useNavigationContext();
+  const { data: allLocations } = useLocations();
+  const locations = allLocations?.filter(l => {
+    if (l.isUnavailable) return false;
+    const floor = floors.find(f => f.number === l.floor);
+    return !floor?.isUnavailable;
+  }) || [];
 
   const { data: foundRoute, isLoading: isSearching } = useFindRoute(
     from,
@@ -56,9 +63,11 @@ const Index = () => {
     if (foundRoute && !activeRoute) {
       setActiveRoute(foundRoute);
       setSearchTriggered(false);
+      recordNavigation(true, to);
     } else if (foundRoute === null && !error) {
       setError("Sorry, no route found between these locations. Try different points.");
       setSearchTriggered(false);
+      recordNavigation(false);
     }
   }
 

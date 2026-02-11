@@ -7,6 +7,7 @@ export interface Location {
   name_kn?: string;
   floor: number;
   type: LocationType;
+  isUnavailable?: boolean;
 }
 
 export const locations: Location[] = [

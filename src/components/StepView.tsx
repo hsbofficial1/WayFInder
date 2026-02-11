@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, RotateCcw, CheckCircle2, HelpCircle, XCircle
 import { Button } from "@/components/ui/button";
 import DirectionIcon from "@/components/DirectionIcon";
 import { getFloorLabel, type RouteWithSteps } from "@/hooks/useNavigation";
+import { useNavigationContext } from "@/context/NavigationContext";
 import { useLocations } from "@/hooks/useNavigation";
 import type { IconType } from "@/data/routes";
 import PanoramaViewer from "@/components/PanoramaViewer";
@@ -18,6 +19,10 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const { language, t } = useLanguage();
   const { data: locations } = useLocations();
+  const { addFeedback } = useNavigationContext();
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
   const step = route.steps[currentStep];
   const total = route.steps.length;
   const isFirst = currentStep === 0;
@@ -73,6 +78,18 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
     vibrate();
     playSound();
     setCurrentStep((s) => Math.max(s - 1, 0));
+  };
+
+  const submitFeedback = () => {
+    addFeedback({
+      rating,
+      comment,
+      from: route.from,
+      to: route.to
+    });
+    toast.success("Thank you for your feedback!");
+    setShowFeedback(false);
+    onRestart();
   };
 
   const getName = (loc: any) => {
@@ -185,6 +202,12 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
               <span className="text-lg uppercase tracking-wider">{t('arrived')}</span>
             </div>
             <Button
+              onClick={() => setShowFeedback(true)}
+              className="w-full h-16 text-lg rounded-2xl gap-2 font-bold shadow-lg shadow-primary/20 bg-emerald-600 hover:bg-emerald-700"
+            >
+              Share Feedback
+            </Button>
+            <Button
               onClick={onRestart}
               variant="outline"
               className="w-full h-16 text-lg rounded-2xl gap-2 font-semibold shadow-sm hover:bg-secondary/80"
@@ -235,6 +258,37 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
           </div>
         )}
       </div>
+      {/* Feedback Dialog */}
+      <Dialog open={showFeedback} onOpenChange={setShowFeedback}>
+        <DialogContent className="sm:max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">How was your journey?</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-6 py-6">
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRating(star)}
+                  className={`text-4xl transition-all ${star <= rating ? "text-amber-400 scale-110" : "text-slate-200"}`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="w-full min-h-[100px] p-4 rounded-2xl border bg-slate-50 focus:ring-2 focus:ring-primary outline-none transition-all"
+              placeholder="Any comments to help us improve?"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+            />
+          </div>
+          <DialogFooter className="sm:justify-center gap-2">
+            <Button variant="ghost" onClick={() => setShowFeedback(false)} className="rounded-xl">Cancel</Button>
+            <Button onClick={submitFeedback} className="rounded-xl px-8 shadow-lg shadow-primary/20">Submit Review</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

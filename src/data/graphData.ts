@@ -90,64 +90,63 @@ const landmarks: Record<string, {
     // Ground Floor
     "main-gate": {
         label: "Main Entrance",
-        cue: "the glass automatic doors",
-        image: "/assets/panoramas/main-gate.jpg"
+~image: "/assets/panoramas/main-gate.jpg"
     },
-    "reception": {
-        label: "Reception Desk",
+"reception": {
+    label: "Reception Desk",
         cue: "the large wooden desk with the 'Information' sign",
-        image: "/assets/panoramas/reception.jpg"
-    },
-    "lobby": {
-        label: "Main Lobby",
+            image: "/assets/panoramas/reception.jpg"
+},
+"lobby": {
+    label: "Main Lobby",
         cue: "the waiting area with blue sofas",
-        image: "/assets/panoramas/lobby.jpg"
-    },
-    "cafeteria": {
-        label: "Cafeteria",
+            image: "/assets/panoramas/lobby.jpg"
+},
+"cafeteria": {
+    label: "Cafeteria",
         label_ml: "കഫറ്റീരിയ",
-        label_kn: "cafeteria",
-        cue: "the glass doors smelling of fresh coffee",
-        cue_ml: "പുതിയ കാപ്പിയുടെ മണമുള്ള ഗ്ലാസ് വാതിലുകൾ",
-        cue_kn: "ತಾಜಾ ಕಾಫಿಯ ವಾಸನೆ ಬರುವ ಗಾಜಿನ ಬಾಗಿಲುಗಳು",
-        image: "/assets/panoramas/cafeteria.jpg"
-    },
-    "staircase-g": { label: "Ground Floor Stairs", cue: "the wide staircase with metal railings" },
-    "lift-g": { label: "Ground Floor Lifts", cue: "the silver elevator doors" },
-    "washroom-g": { label: "Ground Floor Restroom", cue: "the white door with a hygiene sign" },
-    "meeting-room-1": { label: "Meeting Room 1", cue: "the room with frosted glass walls" },
+            label_kn: "cafeteria",
+                cue: "the glass doors smelling of fresh coffee",
+                    cue_ml: "പുതിയ കാപ്പിയുടെ മണമുള്ള ഗ്ലാസ് വാതിലുകൾ",
+                        cue_kn: "ತಾಜಾ ಕಾಫಿಯ ವಾಸನೆ ಬರುವ ಗಾಜಿನ ಬಾಗಿಲುಗಳು",
+                            image: "/assets/panoramas/cafeteria.jpg"
+},
+"staircase-g": { label: "Ground Floor Stairs", cue: "the wide staircase with metal railings" },
+"lift-g": { label: "Ground Floor Lifts", cue: "the silver elevator doors" },
+"washroom-g": { label: "Ground Floor Restroom", cue: "the white door with a hygiene sign" },
+"meeting-room-1": { label: "Meeting Room 1", cue: "the room with frosted glass walls" },
 
-    // 1st Floor
-    "staircase-1": { label: "1st Floor Stairs Landing", cue: "the landing with a fire extinguisher" },
-    "lift-1": { label: "1st Floor Lifts", cue: "the elevator lobby with a plant" },
-    "corridor-1": {
-        label: "Main Corridor Junction",
+// 1st Floor
+"staircase-1": { label: "1st Floor Stairs Landing", cue: "the landing with a fire extinguisher" },
+"lift-1": { label: "1st Floor Lifts", cue: "the elevator lobby with a plant" },
+"corridor-1": {
+    label: "Main Corridor Junction",
         cue: "the hallway junction near the water cooler",
-        image: "/assets/panoramas/hall.jpg"
-    },
-    "lab-a": { label: "Computer Lab A", cue: "the double doors labeled 'Computer Lab'" },
-    "lab-b": { label: "Physics Lab B", cue: "the door with the 'Safety First' poster" },
-    "office-101": {
-        label: "Office 101",
+            image: "/assets/panoramas/hall.jpg"
+},
+"lab-a": { label: "Computer Lab A", cue: "the double doors labeled 'Computer Lab'" },
+"lab-b": { label: "Physics Lab B", cue: "the door with the 'Safety First' poster" },
+"office-101": {
+    label: "Office 101",
         cue: "the corner office with a wooden door",
-        image: "/assets/panoramas/reception.jpg"
-    },
-    "office-102": { label: "Office 102", cue: "the office next to the large window" },
-    "washroom-1": { label: "1st Floor Restroom", cue: "the blue door" },
-    "break-room": { label: "Break Room", cue: "the room with the vending machine visible" },
+            image: "/assets/panoramas/reception.jpg"
+},
+"office-102": { label: "Office 102", cue: "the office next to the large window" },
+"washroom-1": { label: "1st Floor Restroom", cue: "the blue door" },
+"break-room": { label: "Break Room", cue: "the room with the vending machine visible" },
 
-    // 2nd Floor
-    "staircase-2": { label: "2nd Floor Stairs Landing", cue: "the top of the stairs" },
-    "lift-2": { label: "2nd Floor Lifts", cue: "the elevator area with a directory sign" },
-    "corridor-2": { label: "Upper Corridor", cue: "the hallway with overhead skylights" },
-    "server-room": { label: "Server Room", cue: "the secure metal door with a keypad" },
-    "conference-hall": {
-        label: "Conference Hall",
+// 2nd Floor
+"staircase-2": { label: "2nd Floor Stairs Landing", cue: "the top of the stairs" },
+"lift-2": { label: "2nd Floor Lifts", cue: "the elevator area with a directory sign" },
+"corridor-2": { label: "Upper Corridor", cue: "the hallway with overhead skylights" },
+"server-room": { label: "Server Room", cue: "the secure metal door with a keypad" },
+"conference-hall": {
+    label: "Conference Hall",
         cue: "the large double oak doors",
-        image: "https://images.unsplash.com/photo-1517502884422-41e157d44355?auto=format&fit=crop&w=2000&q=80" // Hall View
-    },
-    "desk-area": { label: "Open Desk Area", cue: "the open workspace with hanging plants" },
-    "washroom-2": { label: "2nd Floor Restroom", cue: "the facility door" },
+            image: "https://images.unsplash.com/photo-1517502884422-41e157d44355?auto=format&fit=crop&w=2000&q=80" // Hall View
+},
+"desk-area": { label: "Open Desk Area", cue: "the open workspace with hanging plants" },
+"washroom-2": { label: "2nd Floor Restroom", cue: "the facility door" },
 };
 
 export interface RouteStep {
