@@ -217,11 +217,21 @@ const Index = () => {
       </main>
 
       {/* Bottom Info */}
-      <footer className="p-6 pt-0 mt-auto text-center animate-in fade-in duration-1000 delay-500">
+      <footer className="p-6 pt-0 mt-auto text-center animate-in fade-in duration-1000 delay-500 flex flex-col items-center gap-3">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 text-[10px] font-medium text-muted-foreground border border-border/50 backdrop-blur-sm">
           <Info size={12} />
           <span>{t('offline_capable')} • {t('no_gps_needed')}</span>
         </div>
+
+        <a
+          href="https://www.curiosityweekends.org"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[10px] font-bold tracking-widest transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_8px_rgba(137,90,249,0.8)] opacity-80 hover:opacity-100"
+        >
+          <span className="text-[#895af9]">CURIOSITY</span>
+          <span className="text-[#82a6ff]"> WEEKENDS</span>
+        </a>
       </footer>
     </div>
   );
