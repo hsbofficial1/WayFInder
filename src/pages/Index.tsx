@@ -26,10 +26,10 @@ const Index = () => {
   const [activeRoute, setActiveRoute] = useState<RouteWithSteps | null>(null);
   const [error, setError] = useState("");
 
-  const { edges, floors } = useNavigationContext();
-  const { data: allLocations } = useLocations();
-
   /* REMOVED: useFindRoute hook usage to fix "Start Navigation" button issues */
+
+  const { edges, floors, recordNavigation } = useNavigationContext();
+  const { data: allLocations } = useLocations();
 
   /* Direct Imperative Route Finding - Fixes Lag & State Issues */
   const handleShowRoute = () => {
@@ -46,7 +46,8 @@ const Index = () => {
     try {
       console.log("Starting route calculation...", { from, to });
       // Calculate route immediately
-      const graphResult = findGraphRoute(from, to, allLocations, edges);
+      // FIXME: Testing with hardcoded graph to isolate data issues
+      const graphResult = findGraphRoute(from, to, undefined, undefined);
       console.log("Graph result:", graphResult);
 
       if (graphResult) {
