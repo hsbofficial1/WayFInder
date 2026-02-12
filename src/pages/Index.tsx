@@ -1,4 +1,4 @@
-import React, { useState, type ReactNode } from "react";
+import React, { useState, useEffect, type ReactNode } from "react";
 
 import {
   Navigation,
@@ -59,17 +59,19 @@ const Index = () => {
   };
 
   // Watch for query result
-  if (searchTriggered && !isSearching && foundRoute !== undefined) {
-    if (foundRoute && !activeRoute) {
-      setActiveRoute(foundRoute);
-      setSearchTriggered(false);
-      recordNavigation(true, to);
-    } else if (foundRoute === null && !error) {
-      setError("Sorry, no route found between these locations. Try different points.");
-      setSearchTriggered(false);
-      recordNavigation(false);
+  React.useEffect(() => {
+    if (searchTriggered && !isSearching && foundRoute !== undefined) {
+      if (foundRoute && !activeRoute) {
+        setActiveRoute(foundRoute);
+        setSearchTriggered(false);
+        recordNavigation(true, to);
+      } else if (foundRoute === null && !error) {
+        setError("Sorry, no route found between these locations. Try different points.");
+        setSearchTriggered(false);
+        recordNavigation(false);
+      }
     }
-  }
+  }, [searchTriggered, isSearching, foundRoute, activeRoute, error, to, recordNavigation]);
 
   const handleRestart = () => {
     setActiveRoute(null);

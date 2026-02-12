@@ -1,3 +1,4 @@
+import React from "react";
 import { MoveUp, MoveLeft, MoveRight, ArrowUp, ArrowDown, MapPin, Navigation } from "lucide-react";
 import type { IconType } from "@/data/routes";
 
@@ -48,10 +49,10 @@ const DirectionIcon = ({ type, size = 32, className = "" }: DirectionIconProps) 
     >
       <div
         className={`rounded-2xl p-3 ${isDestination
-            ? "bg-success text-success-foreground"
-            : isStart
-              ? "bg-accent text-accent-foreground"
-              : "bg-direction-bg text-direction-active"
+          ? "bg-success text-success-foreground"
+          : isStart
+            ? "bg-accent text-accent-foreground"
+            : "bg-direction-bg text-direction-active"
           }`}
       >
         <Icon size={size} strokeWidth={2.5} />

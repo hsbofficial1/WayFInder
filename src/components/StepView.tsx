@@ -8,6 +8,14 @@ import { useNavigationContext } from "@/context/NavigationContext";
 import { useLocations } from "@/hooks/useNavigation";
 import type { IconType } from "@/data/routes";
 import PanoramaViewer from "@/components/PanoramaViewer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface StepViewProps {
   route: RouteWithSteps;
