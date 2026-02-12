@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import * as React from "react";
 import { useNavigationContext } from "@/context/NavigationContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ import {
     RotateCcw,
     ChevronUp,
     ChevronDown,
+    ChevronRight,
     Eye,
     MessageSquare,
     BarChart3,
@@ -55,25 +56,28 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 
+import { findGraphRoute } from "@/data/graphData";
+
 const LOCATION_TYPES: LocationType[] = ["entry", "room", "lab", "office", "hotspot", "utility"];
 const ICON_TYPES: IconType[] = ["straight", "left", "right", "stairs-up", "stairs-down", "lift-up", "lift-down", "destination", "start"];
 
 export default function Admin() {
     const {
-        locations, routes, floors, feedback, stats, floorMaps,
+        locations, routes, floors, feedback, stats, floorMaps, edges,
         addLocation, updateLocation, deleteLocation,
         addRoute, updateRoute, deleteRoute,
         addFloor, updateFloor, deleteFloor,
+        addEdge, updateEdge, deleteEdge,
         setFloorMap, resetToDefaults
     } = useNavigationContext();
 
-    const [activeTab, setActiveTab] = useState("overview");
+    const [activeTab, setActiveTab] = React.useState("overview");
 
     // --- FLOOR MANAGEMENT ---
-    const [isFloorDialogOpen, setIsFloorDialogOpen] = useState(false);
-    const [editingFloor, setEditingFloor] = useState<any>(null);
-    const [floorLabel, setFloorLabel] = useState("");
-    const [floorNumber, setFloorNumber] = useState("0");
+    const [isFloorDialogOpen, setIsFloorDialogOpen] = React.useState(false);
+    const [editingFloor, setEditingFloor] = React.useState<any>(null);
+    const [floorLabel, setFloorLabel] = React.useState("");
+    const [floorNumber, setFloorNumber] = React.useState("0");
 
     const handleSaveFloor = () => {
         if (!floorLabel) return;
@@ -97,11 +101,15 @@ export default function Admin() {
     };
 
     // --- LOCATION MANAGEMENT ---
-    const [isLocDialogOpen, setIsLocDialogOpen] = useState(false);
-    const [editingLoc, setEditingLoc] = useState<any>(null);
-    const [locName, setLocName] = useState("");
-    const [locFloor, setLocFloor] = useState("0");
-    const [locType, setLocType] = useState<LocationType>("room");
+    const [isLocDialogOpen, setIsLocDialogOpen] = React.useState(false);
+    const [editingLoc, setEditingLoc] = React.useState<any>(null);
+    const [locName, setLocName] = React.useState("");
+    const [locFloor, setLocFloor] = React.useState("0");
+    const [locType, setLocType] = React.useState<LocationType>("room");
+    const [locX, setLocX] = React.useState("");
+    const [locY, setLocY] = React.useState("");
+    const [locCue, setLocCue] = React.useState("");
+    const [isPickingPoint, setIsPickingPoint] = React.useState(false);
 
     const handleSaveLocation = () => {
         if (!locName) return;
@@ -111,7 +119,10 @@ export default function Admin() {
             name: locName,
             floor: parseInt(locFloor),
             type: locType,
-            isUnavailable: editingLoc?.isUnavailable || false
+            isUnavailable: editingLoc?.isUnavailable || false,
+            x: locX ? parseFloat(locX) : undefined,
+            y: locY ? parseFloat(locY) : undefined,
+            cue: locCue
         };
 
         if (editingLoc) {
@@ -124,15 +135,18 @@ export default function Admin() {
         setIsLocDialogOpen(false);
         setEditingLoc(null);
         setLocName("");
+        setLocX("");
+        setLocY("");
+        setLocCue("");
     };
 
     // --- ROUTE MANAGEMENT ---
-    const [isRouteDialogOpen, setIsRouteDialogOpen] = useState(false);
-    const [editingRoute, setEditingRoute] = useState<any>(null);
-    const [routeFrom, setRouteFrom] = useState("");
-    const [routeTo, setRouteTo] = useState("");
-    const [routeSteps, setRouteSteps] = useState<RouteStep[]>([]);
-    const [routeEnabled, setRouteEnabled] = useState(true);
+    const [isRouteDialogOpen, setIsRouteDialogOpen] = React.useState(false);
+    const [editingRoute, setEditingRoute] = React.useState<any>(null);
+    const [routeFrom, setRouteFrom] = React.useState("");
+    const [routeTo, setRouteTo] = React.useState("");
+    const [routeSteps, setRouteSteps] = React.useState<RouteStep[]>([]);
+    const [routeEnabled, setRouteEnabled] = React.useState(true);
 
     const handleSaveRoute = () => {
         if (!routeFrom || !routeTo || routeSteps.length === 0) {
@@ -185,6 +199,109 @@ export default function Admin() {
         setRouteSteps(newSteps);
     };
 
+    const handleAutoGenerate = () => {
+        if (!routeFrom || !routeTo) {
+            toast.error("Please select start and destination first");
+            return;
+        }
+
+        const result = findGraphRoute(routeFrom, routeTo, locations, edges);
+        if (result) {
+            const mappedSteps: RouteStep[] = result.steps.map(s => ({
+                instruction: s.instruction,
+                instruction_ml: s.instruction_ml,
+                instruction_kn: s.instruction_kn,
+                icon: s.icon_type as any,
+                floor: s.floor || 0,
+                landmarkImage: s.landmarkImage
+            }));
+            setRouteSteps(mappedSteps);
+            toast.success("Route steps generated from graph");
+        } else {
+            toast.error("No path found between these locations in the graph");
+        }
+    };
+
+    const handleBulkGenerate = () => {
+        const count = locations.length;
+        if (count < 2) return;
+
+        if (!confirm(`This will attempt to generate routes for all possible ${count * (count - 1)} combinations. Existing routes will be skipped. Continue?`)) {
+            return;
+        }
+
+        let added = 0;
+        let skipped = 0;
+        let failed = 0;
+
+        locations.forEach(fromLoc => {
+            locations.forEach(toLoc => {
+                if (fromLoc.id === toLoc.id) return;
+
+                const exists = routes.some(r => r.from === fromLoc.id && r.to === toLoc.id);
+                if (exists) {
+                    skipped++;
+                    return;
+                }
+
+                const result = findGraphRoute(fromLoc.id, toLoc.id, locations, edges);
+                if (result) {
+                    const routeData = {
+                        from: fromLoc.id,
+                        to: toLoc.id,
+                        steps: result.steps.map(s => ({
+                            instruction: s.instruction,
+                            instruction_ml: s.instruction_ml,
+                            instruction_kn: s.instruction_kn,
+                            icon: s.icon_type as any,
+                            floor: s.floor || 0,
+                            landmarkImage: s.landmarkImage
+                        })),
+                        isEnabled: true
+                    };
+                    addRoute(routeData);
+                    added++;
+                } else {
+                    failed++;
+                }
+            });
+        });
+
+        toast.success(`Bulk generation complete: ${added} added, ${skipped} skipped, ${failed} failed.`);
+    };
+
+    // --- EDGE MANAGEMENT ---
+    const [isEdgeDialogOpen, setIsEdgeDialogOpen] = React.useState(false);
+    const [editingEdge, setEditingEdge] = React.useState<any>(null);
+    const [edgeFrom, setEdgeFrom] = React.useState("");
+    const [edgeTo, setEdgeTo] = React.useState("");
+    const [edgeWeight, setEdgeWeight] = React.useState("10");
+    const [edgeType, setEdgeType] = React.useState<any>("walk");
+    const [edgeBidirectional, setEdgeBidirectional] = React.useState(true);
+
+    const handleSaveEdge = () => {
+        if (!edgeFrom || !edgeTo) return;
+        const edgeData = {
+            from: edgeFrom,
+            to: edgeTo,
+            weight: parseFloat(edgeWeight),
+            type: edgeType,
+            bidirectional: edgeBidirectional
+        };
+
+        if (editingEdge) {
+            updateEdge(editingEdge.from, editingEdge.to, edgeData);
+            toast.success("Connection updated");
+        } else {
+            addEdge(edgeData);
+            toast.success("Connection added");
+        }
+        setIsEdgeDialogOpen(false);
+        setEditingEdge(null);
+        setEdgeFrom("");
+        setEdgeTo("");
+    };
+
     // --- MAP UPLOAD ---
     const handleMapUpload = (floorNum: number, e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -199,7 +316,7 @@ export default function Admin() {
     };
 
     // --- STATS COMPUTATION ---
-    const topDestinations = useMemo(() => {
+    const topDestinations = React.useMemo(() => {
         return Object.entries(stats.popularDestinations)
             .sort(([, a], [, b]) => b - a)
             .slice(0, 5);
@@ -237,6 +354,7 @@ export default function Admin() {
                         <TabsTrigger value="overview" className="gap-2 px-4 py-2"><BarChart3 className="h-4 w-4" /> Overview</TabsTrigger>
                         <TabsTrigger value="floors" className="gap-2 px-4 py-2"><Layers className="h-4 w-4" /> Floors</TabsTrigger>
                         <TabsTrigger value="locations" className="gap-2 px-4 py-2"><MapPin className="h-4 w-4" /> Locations</TabsTrigger>
+                        <TabsTrigger value="edges" className="gap-2 px-4 py-2"><MapIcon className="h-4 w-4" /> Connections</TabsTrigger>
                         <TabsTrigger value="routes" className="gap-2 px-4 py-2"><RouteIcon className="h-4 w-4" /> Routes</TabsTrigger>
                         <TabsTrigger value="feedback" className="gap-2 px-4 py-2"><MessageSquare className="h-4 w-4" /> Feedback</TabsTrigger>
                     </TabsList>
@@ -379,7 +497,14 @@ export default function Admin() {
                                     <CardTitle>Points of Interest</CardTitle>
                                     <CardDescription>Manage rooms, facilities, and hotspots</CardDescription>
                                 </div>
-                                <Button onClick={() => { setEditingLoc(null); setLocName(""); setIsLocDialogOpen(true); }}>
+                                <Button onClick={() => {
+                                    setEditingLoc(null);
+                                    setLocName("");
+                                    setLocX("");
+                                    setLocY("");
+                                    setLocCue("");
+                                    setIsLocDialogOpen(true);
+                                }}>
                                     <Plus className="mr-2 h-4 w-4" /> Add Location
                                 </Button>
                             </CardHeader>
@@ -416,11 +541,89 @@ export default function Admin() {
                                                         setLocName(loc.name);
                                                         setLocFloor(loc.floor.toString());
                                                         setLocType(loc.type);
+                                                        setLocX(loc.x?.toString() || "");
+                                                        setLocY(loc.y?.toString() || "");
+                                                        setLocCue(loc.cue || "");
                                                         setIsLocDialogOpen(true);
                                                     }}>
                                                         <Save className="h-4 w-4 text-primary" />
                                                     </Button>
                                                     <Button variant="ghost" size="icon" onClick={() => deleteLocation(loc.id)}>
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* --- EDGES TAB --- */}
+                    <TabsContent value="edges">
+                        <Card className="shadow-xl border-slate-200 dark:border-slate-800">
+                            <CardHeader className="flex flex-row items-center justify-between border-b pb-6">
+                                <div>
+                                    <CardTitle>Graph Connections</CardTitle>
+                                    <CardDescription>Define how locations are physically connected</CardDescription>
+                                </div>
+                                <Button onClick={() => {
+                                    setEditingEdge(null);
+                                    setEdgeFrom("");
+                                    setEdgeTo("");
+                                    setEdgeWeight("10");
+                                    setEdgeType("walk");
+                                    setEdgeBidirectional(true);
+                                    setIsEdgeDialogOpen(true);
+                                }}>
+                                    <Plus className="mr-2 h-4 w-4" /> Add Connection
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="pt-6">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-slate-50 dark:bg-slate-900/50">
+                                            <TableHead>From</TableHead>
+                                            <TableHead></TableHead>
+                                            <TableHead>To</TableHead>
+                                            <TableHead>Type</TableHead>
+                                            <TableHead>Distance</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {edges.map((edge, i) => (
+                                            <TableRow key={`${edge.from}-${edge.to}-${i}`} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20">
+                                                <TableCell className="font-medium">
+                                                    {locations.find(l => l.id === edge.from)?.name || edge.from}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center text-slate-300">
+                                                        <ChevronRight className="h-4 w-4" />
+                                                        {edge.bidirectional !== false && <ChevronRight className="h-4 w-4 -ml-2 rotate-180" />}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="font-medium">
+                                                    {locations.find(l => l.id === edge.to)?.name || edge.to}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="secondary" className="capitalize">{edge.type}</Badge>
+                                                </TableCell>
+                                                <TableCell>{edge.weight}m</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="icon" onClick={() => {
+                                                        setEditingEdge(edge);
+                                                        setEdgeFrom(edge.from);
+                                                        setEdgeTo(edge.to);
+                                                        setEdgeWeight(edge.weight.toString());
+                                                        setEdgeType(edge.type);
+                                                        setEdgeBidirectional(edge.bidirectional !== false);
+                                                        setIsEdgeDialogOpen(true);
+                                                    }}>
+                                                        <Save className="h-4 w-4 text-primary" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => deleteEdge(edge.from, edge.to)}>
                                                         <Trash2 className="h-4 w-4 text-destructive" />
                                                     </Button>
                                                 </TableCell>
@@ -440,16 +643,29 @@ export default function Admin() {
                                     <CardTitle>Route Management</CardTitle>
                                     <CardDescription>Design fixed paths or overrides between areas</CardDescription>
                                 </div>
-                                <Button onClick={() => {
-                                    setEditingRoute(null);
-                                    setRouteFrom("");
-                                    setRouteTo("");
-                                    setRouteSteps([]);
-                                    setRouteEnabled(true);
-                                    setIsRouteDialogOpen(true);
-                                }}>
-                                    <Plus className="mr-2 h-4 w-4" /> Design Route
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button variant="destructive" size="sm" onClick={() => {
+                                        if (confirm("Are you sure you want to delete ALL custom routes?")) {
+                                            routes.forEach(r => deleteRoute(r.from, r.to));
+                                            toast.success("All custom routes cleared");
+                                        }
+                                    }}>
+                                        <Trash2 className="mr-2 h-4 w-4" /> Clear All
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={handleBulkGenerate}>
+                                        <RouteIcon className="mr-2 h-4 w-4" /> Bulk Generate All
+                                    </Button>
+                                    <Button onClick={() => {
+                                        setEditingRoute(null);
+                                        setRouteFrom("");
+                                        setRouteTo("");
+                                        setRouteSteps([]);
+                                        setRouteEnabled(true);
+                                        setIsRouteDialogOpen(true);
+                                    }}>
+                                        <Plus className="mr-2 h-4 w-4" /> Design Route
+                                    </Button>
+                                </div>
                             </CardHeader>
                             <CardContent className="pt-6">
                                 <Table>
@@ -505,11 +721,11 @@ export default function Admin() {
                     {/* --- FEEDBACK TAB --- */}
                     <TabsContent value="feedback">
                         <Card className="shadow-xl border-slate-200 dark:border-slate-800">
-                            <CardHeader>
+                            <CardHeader border-b pb-6>
                                 <CardTitle>User Feedback</CardTitle>
                                 <CardDescription>Reviews and reports from visitors</CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="pt-6">
                                 {feedback.length > 0 ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {feedback.map(fb => (
@@ -573,7 +789,7 @@ export default function Admin() {
 
                 {/* Location Modal */}
                 <Dialog open={isLocDialogOpen} onOpenChange={setIsLocDialogOpen}>
-                    <DialogContent>
+                    <DialogContent className="max-w-xl">
                         <DialogHeader>
                             <DialogTitle>{editingLoc ? "Edit Location" : "Create New Location"}</DialogTitle>
                         </DialogHeader>
@@ -606,10 +822,124 @@ export default function Admin() {
                                     </Select>
                                 </div>
                             </div>
+                            <div className="grid gap-2">
+                                <Label>Human-Friendly Cue (Hint)</Label>
+                                <Input value={locCue} onChange={(e) => setLocCue(e.target.value)} placeholder="e.g. near the large wooden door" />
+                            </div>
+                            <div className="border rounded-xl p-4 bg-slate-50 dark:bg-slate-900/50 space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <Label className="font-bold text-slate-900">Map Coordinates (XY)</Label>
+                                    <Button size="sm" variant={isPickingPoint ? "destructive" : "outline"} onClick={() => setIsPickingPoint(!isPickingPoint)}>
+                                        {isPickingPoint ? "Cancel Picking" : "Pick on Floor Map"}
+                                    </Button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-1.5">
+                                        <Label htmlFor="locX" className="text-xs text-slate-500">X Position (%)</Label>
+                                        <Input id="locX" type="number" value={locX} onChange={(e) => setLocX(e.target.value)} placeholder="0" />
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <Label htmlFor="locY" className="text-xs text-slate-500">Y Position (%)</Label>
+                                        <Input id="locY" type="number" value={locY} onChange={(e) => setLocY(e.target.value)} placeholder="0" />
+                                    </div>
+                                </div>
+                                {isPickingPoint && (
+                                    <div className="relative border-2 border-primary/20 rounded-lg overflow-hidden cursor-crosshair group mt-2 bg-slate-200">
+                                        <div className="absolute inset-0 flex items-center justify-center text-slate-400 group-hover:hidden italic text-xs pointer-events-none">
+                                            {floorMaps[parseInt(locFloor)] ? "Click anywhere on the map" : "No map uploaded for this floor"}
+                                        </div>
+                                        {floorMaps[parseInt(locFloor)] ? (
+                                            <img
+                                                src={floorMaps[parseInt(locFloor)]}
+                                                className="w-full h-auto opacity-70 group-hover:opacity-100 transition-opacity"
+                                                onClick={(e) => {
+                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                    const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+                                                    const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+                                                    setLocX(x.toString());
+                                                    setLocY(y.toString());
+                                                    setIsPickingPoint(false);
+                                                    toast.success(`Point selected: ${x}, ${y}`);
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="h-40 flex items-center justify-center text-slate-400">
+                                                Please upload a floor map first.
+                                            </div>
+                                        )}
+                                        {locX && locY && (
+                                            <div
+                                                className="absolute w-4 h-4 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 shadow-lg ring-2 ring-white z-10"
+                                                style={{ left: `${locX}%`, top: `${locY}%` }}
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setIsLocDialogOpen(false)}>Cancel</Button>
                             <Button onClick={handleSaveLocation}>Commit Changes</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Edge/Connection Modal */}
+                <Dialog open={isEdgeDialogOpen} onOpenChange={setIsEdgeDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{editingEdge ? "Edit Connection" : "Add Graph Link"}</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-6 py-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label>From Location</Label>
+                                    <Select value={edgeFrom} onValueChange={setEdgeFrom}>
+                                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                        <SelectContent>
+                                            {locations.map(l => (
+                                                <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label>To Location</Label>
+                                    <Select value={edgeTo} onValueChange={setEdgeTo}>
+                                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                        <SelectContent>
+                                            {locations.map(l => (
+                                                <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label>Distance (meters)</Label>
+                                    <Input type="number" value={edgeWeight} onChange={(e) => setEdgeWeight(e.target.value)} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label>Connection Type</Label>
+                                    <Select value={edgeType} onValueChange={setEdgeType}>
+                                        <SelectTrigger className="capitalize"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="walk">Walk</SelectItem>
+                                            <SelectItem value="stairs">Stairs</SelectItem>
+                                            <SelectItem value="lift">Lift</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 border p-3 rounded-lg bg-slate-50">
+                                <Switch checked={edgeBidirectional} onCheckedChange={setEdgeBidirectional} id="bidir" />
+                                <Label htmlFor="bidir">Bidirectional (Both Ways)</Label>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsEdgeDialogOpen(false)}>Cancel</Button>
+                            <Button onClick={handleSaveEdge}>Save Connection</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
@@ -661,6 +991,9 @@ export default function Admin() {
                                         <Label className="text-xs font-medium cursor-pointer" htmlFor="route-live">LIVE STATUS</Label>
                                         <Switch id="route-live" checked={routeEnabled} onCheckedChange={setRouteEnabled} />
                                     </div>
+                                    <Button size="sm" variant="outline" onClick={handleAutoGenerate} className="shadow-sm">
+                                        <RotateCcw className="h-4 w-4 mr-1" /> Auto-Generate
+                                    </Button>
                                     <Button size="sm" variant="default" onClick={addStep} className="shadow-sm">
                                         <Plus className="h-4 w-4 mr-1" /> Add Step
                                     </Button>
@@ -728,10 +1061,6 @@ export default function Admin() {
                                                         <Label className="text-[10px] uppercase font-bold text-slate-400">Kannada</Label>
                                                         <Input placeholder="ಕನ್ನಡ" value={step.instruction_kn} onChange={(e) => updateStep(idx, "instruction_kn", e.target.value)} />
                                                     </div>
-                                                    <div className="space-y-2 md:col-span-1">
-                                                        <Label className="text-[10px] uppercase font-bold text-slate-400">Panorama (URL/Base64)</Label>
-                                                        <Input placeholder="Image..." value={step.panoramaImage} onChange={(e) => updateStep(idx, "panoramaImage", e.target.value)} />
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -778,9 +1107,9 @@ function StatsCard({ title, value, icon, description, color = "primary" }: any) 
                     </div>
                 </div>
                 <div className="flex items-baseline gap-2">
-                    <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{value}</h3>
+                    {description && <p className="text-xs text-slate-500">{description}</p>}
                 </div>
-                {description && <p className="text-xs text-slate-400 mt-1">{description}</p>}
             </CardContent>
         </Card>
     );

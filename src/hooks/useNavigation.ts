@@ -34,14 +34,7 @@ export interface RouteWithSteps {
 }
 
 export function useFindRoute(from: string, to: string, enabled: boolean) {
-  const { routes } = useNavigationContext();
-
-  // We wrap this in a "query-like" object or just use simple execution
-  // Since original code used useQuery, we can mock it or just useMemo if we want re-renders on route change.
-  // However, existing consumers expect a query result object.
-  // We can stick to a simple hook return or useQuery for consistency if we wanted async, but sync is fine.
-
-  // Actually, let's just compute it.
+  const { routes, locations, edges } = useNavigationContext();
 
   if (!enabled || !from || !to) {
     return { data: null, isLoading: false };
@@ -62,12 +55,14 @@ export function useFindRoute(from: string, to: string, enabled: boolean) {
   }
 
   // 2. Try Graph Route (Codebase logic)
-  const graphResult = findGraphRoute(from, to);
+  const graphResult = findGraphRoute(from, to, locations, edges);
   if (graphResult) {
     // Map graph steps to RouteStep
-    const steps: RouteStep[] = graphResult.steps.map((step) => ({
+    const steps: RouteStep[] = graphResult.steps.map((step: any) => ({
       instruction: step.instruction,
-      icon: step.icon_type as any, // Cast because defined type in graphData might differ slightly from routes.ts
+      instruction_ml: step.instruction_ml,
+      instruction_kn: step.instruction_kn,
+      icon: step.icon_type as any,
       floor: step.floor ?? 0,
       landmarkImage: step.landmarkImage,
     }));

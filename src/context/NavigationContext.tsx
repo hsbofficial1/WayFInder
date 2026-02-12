@@ -1,8 +1,16 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React from "react";
 import { locations as initialLocations, Location } from "@/data/locations";
 import { routes as initialRoutes, Route } from "@/data/routes";
 import { floors as initialFloors, Floor } from "@/data/floors";
 import { Feedback, UsageStats } from "@/data/feedback";
+
+export interface Edge {
+    from: string;
+    to: string;
+    weight: number;
+    type: "walk" | "stairs" | "lift";
+    bidirectional?: boolean;
+}
 
 interface NavigationContextType {
     locations: Location[];
@@ -11,12 +19,16 @@ interface NavigationContextType {
     feedback: Feedback[];
     stats: UsageStats;
     floorMaps: Record<number, string>;
+    edges: Edge[];
     addLocation: (location: Location) => void;
     updateLocation: (id: string, location: Partial<Location>) => void;
     deleteLocation: (id: string) => void;
     addRoute: (route: Route) => void;
     updateRoute: (from: string, to: string, route: Route) => void;
     deleteRoute: (from: string, to: string) => void;
+    addEdge: (edge: Edge) => void;
+    updateEdge: (oldFrom: string, oldTo: string, edge: Edge) => void;
+    deleteEdge: (from: string, to: string) => void;
     addFloor: (floor: Floor) => void;
     updateFloor: (id: string, floor: Partial<Floor>) => void;
     deleteFloor: (id: string) => void;
@@ -26,29 +38,31 @@ interface NavigationContextType {
     resetToDefaults: () => void;
 }
 
-const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
+const NavigationContext = React.createContext<NavigationContextType | undefined>(undefined);
 
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [locations, setLocations] = useState<Location[]>([]);
-    const [routes, setRoutes] = useState<Route[]>([]);
-    const [floors, setFloors] = useState<Floor[]>([]);
-    const [feedback, setFeedback] = useState<Feedback[]>([]);
-    const [stats, setStats] = useState<UsageStats>({
+    const [locations, setLocations] = React.useState<Location[]>([]);
+    const [routes, setRoutes] = React.useState<Route[]>([]);
+    const [floors, setFloors] = React.useState<Floor[]>([]);
+    const [feedback, setFeedback] = React.useState<Feedback[]>([]);
+    const [stats, setStats] = React.useState<UsageStats>({
         totalNavigations: 0,
         routesFound: 0,
         routesNotFound: 0,
         popularDestinations: {}
     });
-    const [floorMaps, setFloorMaps] = useState<Record<number, string>>({});
+    const [floorMaps, setFloorMaps] = React.useState<Record<number, string>>({});
+    const [edges, setEdges] = React.useState<Edge[]>([]);
 
     // Initialize from LocalStorage or Defaults
-    useEffect(() => {
+    React.useEffect(() => {
         const storedLocations = localStorage.getItem("locations");
         const storedRoutes = localStorage.getItem("routes_v3");
         const storedFloors = localStorage.getItem("floors");
         const storedFeedback = localStorage.getItem("feedback");
         const storedStats = localStorage.getItem("usageStats");
         const storedMaps = localStorage.getItem("floorMaps");
+        const storedEdges = localStorage.getItem("edges");
 
         if (storedLocations) setLocations(JSON.parse(storedLocations));
         else setLocations(initialLocations);
@@ -62,32 +76,38 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (storedFeedback) setFeedback(JSON.parse(storedFeedback));
         if (storedStats) setStats(JSON.parse(storedStats));
         if (storedMaps) setFloorMaps(JSON.parse(storedMaps));
+        if (storedEdges) setEdges(JSON.parse(storedEdges));
+        else setEdges([]);
     }, []);
 
     // Persistence Effects
-    useEffect(() => {
+    React.useEffect(() => {
         if (locations.length > 0) localStorage.setItem("locations", JSON.stringify(locations));
     }, [locations]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (routes.length > 0) localStorage.setItem("routes_v3", JSON.stringify(routes));
     }, [routes]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (floors.length > 0) localStorage.setItem("floors", JSON.stringify(floors));
     }, [floors]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         localStorage.setItem("feedback", JSON.stringify(feedback));
     }, [feedback]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         localStorage.setItem("usageStats", JSON.stringify(stats));
     }, [stats]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (Object.keys(floorMaps).length > 0) localStorage.setItem("floorMaps", JSON.stringify(floorMaps));
     }, [floorMaps]);
+
+    React.useEffect(() => {
+        localStorage.setItem("edges", JSON.stringify(edges));
+    }, [edges]);
 
     const addLocation = (location: Location) => {
         setLocations(prev => [...prev, location]);
@@ -114,6 +134,18 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     const deleteRoute = (from: string, to: string) => {
         setRoutes(prev => prev.filter(r => !(r.from === from && r.to === to)));
+    };
+
+    const addEdge = (edge: Edge) => {
+        setEdges(prev => [...prev, edge]);
+    };
+
+    const updateEdge = (oldFrom: string, oldTo: string, updatedEdge: Edge) => {
+        setEdges(prev => prev.map(e => (e.from === oldFrom && e.to === oldTo) ? updatedEdge : e));
+    };
+
+    const deleteEdge = (from: string, to: string) => {
+        setEdges(prev => prev.filter(e => !(e.from === from && e.to === to)));
     };
 
     const addFloor = (floor: Floor) => {
@@ -169,6 +201,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             popularDestinations: {}
         });
         setFloorMaps({});
+        setEdges([]);
         localStorage.clear();
     };
 
@@ -192,7 +225,11 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             setFloorMap,
             addFeedback,
             recordNavigation,
-            resetToDefaults
+            resetToDefaults,
+            edges,
+            addEdge,
+            updateEdge,
+            deleteEdge
         }}>
             {children}
         </NavigationContext.Provider>
@@ -200,7 +237,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 };
 
 export const useNavigationContext = () => {
-    const context = useContext(NavigationContext);
+    const context = React.useContext(NavigationContext);
     if (!context) throw new Error("useNavigationContext must be used within a NavigationProvider");
     return context;
 };

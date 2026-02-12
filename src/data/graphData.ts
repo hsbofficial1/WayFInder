@@ -6,34 +6,33 @@ const graph = new NavigationGraph();
 // Define Coordinates
 const coordinates: Record<string, Point> = {
     // Ground Floor
-    "main-gate": { x: 0, y: 0, floor: 0 },
-    "reception": { x: 0, y: 15, floor: 0 }, // Straight from Gate
-    "lobby": { x: 0, y: 25, floor: 0 }, // Past Reception
-    "cafeteria": { x: -15, y: 15, floor: 0 }, // Left from Reception
-    "staircase-g": { x: 15, y: 15, floor: 0 }, // Right from Reception
-    "lift-g": { x: 20, y: 15, floor: 0 }, // Further Right
-    "washroom-g": { x: -5, y: 10, floor: 0 }, // Near Reception
-    "meeting-room-1": { x: -10, y: 25, floor: 0 }, // Left from Lobby
+    "reception": { x: 0, y: 0, floor: 0 },
+    "asap-office": { x: -10, y: 10, floor: 0 },
+    "emergency-exit": { x: 10, y: 20, floor: 0 },
+    "leap-ksum": { x: -10, y: 20, floor: 0 },
+    "openmind-makerspace": { x: 10, y: 10, floor: 0 },
+    "sane-room": { x: -10, y: -10, floor: 0 },
+    "autonomous-auas": { x: 10, y: -10, floor: 0 },
+    "washroom-g": { x: -5, y: -15, floor: 0 },
+    "dining-hall": { x: 5, y: -15, floor: 0 },
+    "first-aid-room": { x: 15, y: 15, floor: 0 },
+    "staircase-g": { x: 15, y: 0, floor: 0 },
+    "lift-g": { x: 20, y: 0, floor: 0 },
 
     // 1st Floor
-    "staircase-1": { x: 15, y: 15, floor: 1 },
-    "lift-1": { x: 20, y: 15, floor: 1 },
-    "corridor-1": { x: 15, y: 25, floor: 1 }, // Virtual node for corridor
-    "lab-a": { x: 10, y: 25, floor: 1 }, // Left from corridor
-    "lab-b": { x: 20, y: 25, floor: 1 }, // Right from corridor
-    "office-101": { x: 5, y: 25, floor: 1 },
-    "office-102": { x: 25, y: 25, floor: 1 },
-    "washroom-1": { x: 15, y: 30, floor: 1 },
-    "break-room": { x: -5, y: 25, floor: 1 },
-
-    // 2nd Floor
-    "staircase-2": { x: 15, y: 15, floor: 2 },
-    "lift-2": { x: 20, y: 15, floor: 2 },
-    "corridor-2": { x: 15, y: 25, floor: 2 },
-    "server-room": { x: 10, y: 25, floor: 2 },
-    "conference-hall": { x: 15, y: 40, floor: 2 },
-    "desk-area": { x: 25, y: 20, floor: 2 },
-    "washroom-2": { x: 15, y: 30, floor: 2 },
+    "staircase-1": { x: 15, y: 0, floor: 1 },
+    "lift-1": { x: 20, y: 0, floor: 1 },
+    "rappin-range": { x: -10, y: 10, floor: 1 },
+    "crown-down": { x: 0, y: 15, floor: 1 },
+    "unknown-room": { x: 10, y: 15, floor: 1 },
+    "link-admin-office": { x: 15, y: 10, floor: 1 },
+    "foursquare-link": { x: -10, y: -10, floor: 1 },
+    "noodlin-space": { x: -5, y: -15, floor: 1 },
+    "cranium-room": { x: 5, y: -15, floor: 1 },
+    "server-room-1": { x: 10, y: -10, floor: 1 },
+    "focus-space": { x: 15, y: 5, floor: 1 },
+    "washroom-1": { x: 15, y: -5, floor: 1 },
+    "curiosity-weekends": { x: 0, y: 20, floor: 1 },
 };
 
 // Add Nodes
@@ -42,112 +41,73 @@ Object.entries(coordinates).forEach(([id, coords]) => {
 });
 
 // Add Edges (bidirectional by default)
-// Ground
-graph.addEdge("main-gate", "reception", 15, "walk");
-graph.addEdge("reception", "lobby", 10, "walk");
-graph.addEdge("reception", "cafeteria", 15, "walk"); // Left turn implicitly
-graph.addEdge("reception", "staircase-g", 15, "walk"); // Right turn
+// Ground Floor Connections
+graph.addEdge("reception", "staircase-g", 15, "walk");
 graph.addEdge("reception", "lift-g", 20, "walk");
-graph.addEdge("reception", "washroom-g", 8, "walk");
-graph.addEdge("lobby", "meeting-room-1", 10, "walk");
+graph.addEdge("reception", "asap-office", 15, "walk");
+graph.addEdge("reception", "openmind-makerspace", 15, "walk");
+graph.addEdge("reception", "sane-room", 15, "walk");
+graph.addEdge("reception", "autonomous-auas", 15, "walk");
+graph.addEdge("asap-office", "leap-ksum", 10, "walk");
+graph.addEdge("openmind-makerspace", "emergency-exit", 10, "walk");
+graph.addEdge("emergency-exit", "first-aid-room", 10, "walk");
+graph.addEdge("sane-room", "washroom-g", 10, "walk");
+graph.addEdge("autonomous-auas", "dining-hall", 10, "walk");
 
 // Vertical Connections
-graph.addEdge("staircase-g", "staircase-1", 20, "stairs", true); // Up/Down
-graph.addEdge("staircase-1", "staircase-2", 20, "stairs", true);
+graph.addEdge("staircase-g", "staircase-1", 20, "stairs", true);
 graph.addEdge("lift-g", "lift-1", 5, "lift", true);
-graph.addEdge("lift-1", "lift-2", 5, "lift", true);
 
-// 1st Floor
-graph.addEdge("staircase-1", "corridor-1", 10, "walk");
-graph.addEdge("lift-1", "corridor-1", 12, "walk");
-graph.addEdge("corridor-1", "lab-a", 5, "walk");
-graph.addEdge("corridor-1", "lab-b", 5, "walk");
-graph.addEdge("corridor-1", "washroom-1", 5, "walk");
-graph.addEdge("lab-a", "office-101", 5, "walk");
-graph.addEdge("lab-b", "office-102", 5, "walk");
-graph.addEdge("office-101", "break-room", 10, "walk");
+// 1st Floor Connections
+graph.addEdge("staircase-1", "rappin-range", 20, "walk");
+graph.addEdge("staircase-1", "link-admin-office", 10, "walk");
+graph.addEdge("lift-1", "focus-space", 5, "walk");
+graph.addEdge("rappin-range", "crown-down", 10, "walk");
+graph.addEdge("crown-down", "curiosity-weekends", 10, "walk");
+graph.addEdge("crown-down", "unknown-room", 10, "walk");
+graph.addEdge("link-admin-office", "server-room-1", 15, "walk");
+graph.addEdge("rappin-range", "foursquare-link", 20, "walk");
+graph.addEdge("foursquare-link", "noodlin-space", 10, "walk");
+graph.addEdge("server-room-1", "cranium-room", 10, "walk");
+graph.addEdge("server-room-1", "washroom-1", 10, "walk");
 
-// 2nd Floor
-graph.addEdge("staircase-2", "corridor-2", 10, "walk");
-graph.addEdge("lift-2", "corridor-2", 12, "walk");
-// graph.addEdge("corridor-2", "server-room", 5, "walk"); // Server room restricted? Let's connect it.
-graph.addEdge("corridor-2", "server-room", 5, "walk");
-graph.addEdge("corridor-2", "conference-hall", 15, "walk");
-graph.addEdge("corridor-2", "washroom-2", 5, "walk");
-graph.addEdge("lift-2", "desk-area", 10, "walk");
-graph.addEdge("staircase-2", "desk-area", 15, "walk");
-
-// Define Landmarks & Visual Cues
 const landmarks: Record<string, {
     label: string;
-    label_ml?: string;~
-        label_kn ?: string;
-cue: string;
-cue_ml ?: string;
-cue_kn ?: string;
-image ?: string
+    label_ml?: string;
+    label_kn?: string;
+    cue: string;
+    cue_ml?: string;
+    cue_kn?: string;
+    image?: string
 }> = {
     // Ground Floor
-    "main-gate": {
-        label: "Main Entrance",
-            cue: "the glass automatic doors",
-                image: "/assets/panoramas/main-gate.jpg"
-    },
-    "reception": {
-        label: "Reception Desk",
-            cue: "the large wooden desk with the 'Information' sign",
-                image: "/assets/panoramas/reception.jpg"
-    },
-    "lobby": {
-        label: "Main Lobby",
-            cue: "the waiting area with blue sofas",
-                image: "/assets/panoramas/lobby.jpg"
-    },
-    "cafeteria": {
-        label: "Cafeteria",
-            label_ml: "കഫറ്റീരിയ",
-                label_kn: "cafeteria",
-                    cue: "the glass doors smelling of fresh coffee",
-                        cue_ml: "പുതിയ കാപ്പിയുടെ മണമുള്ള ഗ്ലാസ് വാതിലുകൾ",
-                            cue_kn: "ತಾಜಾ ಕಾಫಿಯ ವಾಸನೆ ಬರುವ ಗಾಜಿನ ಬಾಗಿಲುಗಳು",
-                                image: "/assets/panoramas/cafeteria.jpg"
-    },
-    "staircase-g": { label: "Ground Floor Stairs", cue: "the wide staircase with metal railings" },
-    "lift-g": { label: "Ground Floor Lifts", cue: "the silver elevator doors" },
-    "washroom-g": { label: "Ground Floor Restroom", cue: "the white door with a hygiene sign" },
-    "meeting-room-1": { label: "Meeting Room 1", cue: "the room with frosted glass walls" },
+    "reception": { label: "Reception", cue: "the main desk area" },
+    "asap-office": { label: "Asap Office", cue: "the office with ASAP branding" },
+    "emergency-exit": { label: "Emergency Exit", cue: "the brightly lit exit sign" },
+    "leap-ksum": { label: "Leap / Kerala Startup Mission", cue: "the KSUM workspace" },
+    "openmind-makerspace": { label: "Openmind Makerspace", cue: "the room with 3D printers and tools" },
+    "sane-room": { label: "The Sane Room", cue: "the quiet zone" },
+    "autonomous-auas": { label: "Autonomous AUAS", cue: "the AUAS research lab" },
+    "washroom-g": { label: "Washroom 1", cue: "the restroom near Sane Room" },
+    "dining-hall": { label: "Dining Hall", cue: "the large hall with tables" },
+    "first-aid-room": { label: "First Aid Room", cue: "the room with a medical cross" },
+    "staircase-g": { label: "Stairs 1", cue: "the main stairs" },
+    "lift-g": { label: "Lift 1", cue: "the elevator bank" },
 
     // 1st Floor
-    "staircase-1": { label: "1st Floor Stairs Landing", cue: "the landing with a fire extinguisher" },
-    "lift-1": { label: "1st Floor Lifts", cue: "the elevator lobby with a plant" },
-    "corridor-1": {
-        label: "Main Corridor Junction",
-            cue: "the hallway junction near the water cooler",
-                image: "/assets/panoramas/hall.jpg"
-    },
-    "lab-a": { label: "Computer Lab A", cue: "the double doors labeled 'Computer Lab'" },
-    "lab-b": { label: "Physics Lab B", cue: "the door with the 'Safety First' poster" },
-    "office-101": {
-        label: "Office 101",
-            cue: "the corner office with a wooden door",
-                image: "/assets/panoramas/reception.jpg"
-    },
-    "office-102": { label: "Office 102", cue: "the office next to the large window" },
-    "washroom-1": { label: "1st Floor Restroom", cue: "the blue door" },
-    "break-room": { label: "Break Room", cue: "the room with the vending machine visible" },
-
-    // 2nd Floor
-    "staircase-2": { label: "2nd Floor Stairs Landing", cue: "the top of the stairs" },
-    "lift-2": { label: "2nd Floor Lifts", cue: "the elevator area with a directory sign" },
-    "corridor-2": { label: "Upper Corridor", cue: "the hallway with overhead skylights" },
-    "server-room": { label: "Server Room", cue: "the secure metal door with a keypad" },
-    "conference-hall": {
-        label: "Conference Hall",
-            cue: "the large double oak doors",
-                image: "https://images.unsplash.com/photo-1517502884422-41e157d44355?auto=format&fit=crop&w=2000&q=80" // Hall View
-    },
-    "desk-area": { label: "Open Desk Area", cue: "the open workspace with hanging plants" },
-    "washroom-2": { label: "2nd Floor Restroom", cue: "the facility door" },
+    "rappin-range": { label: "Rappin' Range", cue: "the area with soundproofing" },
+    "crown-down": { label: "Crown Down", cue: "the chill area" },
+    "unknown-room": { label: "Unknown Room", cue: "the unmarked door" },
+    "link-admin-office": { label: "Link Administrative Office", cue: "the admin hub" },
+    "staircase-1": { label: "Stairs 2", cue: "the upper stairs landing" },
+    "lift-1": { label: "Lift 2", cue: "the upper elevator lobby" },
+    "foursquare-link": { label: "Foursquare Link", cue: "the networking space" },
+    "noodlin-space": { label: "Noodlin' Space", cue: "the creative corner" },
+    "cranium-room": { label: "Cranium Room", cue: "the brainstorming room" },
+    "server-room-1": { label: "Server Room", cue: "the secure room with server racks" },
+    "focus-space": { label: "Focus Space", cue: "the individual work pods" },
+    "washroom-1": { label: "Washroom 2", cue: "the upper floor restroom" },
+    "curiosity-weekends": { label: "Curiosity Weekends", cue: "the event space" },
 };
 
 export interface RouteStep {
@@ -159,20 +119,56 @@ export interface RouteStep {
     landmarkImage?: string;
 }
 
-export const findGraphRoute = (fromId: string, toId: string) => {
-    const pathIds = graph.findPath(fromId, toId);
+export const findGraphRoute = (
+    fromId: string,
+    toId: string,
+    customLocations?: Location[],
+    customEdges?: any[]
+) => {
+    let activeGraph = graph;
+    let activeCoords = coordinates;
+    let activeLandmarks = landmarks;
+
+    if (customLocations && customEdges) {
+        activeGraph = new NavigationGraph();
+        activeCoords = {};
+        activeLandmarks = {};
+
+        customLocations.forEach(loc => {
+            if (loc.x !== undefined && loc.y !== undefined) {
+                const coords = { x: loc.x, y: loc.y, floor: loc.floor };
+                activeGraph.addNode(loc.id, coords);
+                activeCoords[loc.id] = coords;
+                activeLandmarks[loc.id] = {
+                    label: loc.name,
+                    label_ml: loc.name_ml,
+                    label_kn: loc.name_kn,
+                    cue: loc.cue || "the area",
+                    cue_ml: loc.cue_ml,
+                    cue_kn: loc.cue_kn,
+                    image: loc.image
+                };
+            }
+        });
+
+        customEdges.forEach(edge => {
+            activeGraph.addEdge(edge.from, edge.to, edge.weight, edge.type, edge.bidirectional !== false);
+        });
+    }
+
+    const pathIds = activeGraph.findPath(fromId, toId);
     if (!pathIds || pathIds.length < 2) return null;
 
     const steps: RouteStep[] = [];
 
     // Initial instruction
-    const startLoc = landmarks[fromId] || { label: fromId, cue: "the starting point", image: undefined };
+    const startLoc = activeLandmarks[fromId] || { label: fromId, cue: "the starting point", image: undefined };
     steps.push({
         instruction: `Start at ${startLoc.label}, near ${startLoc.cue}.`,
         instruction_ml: `${startLoc.label_ml || startLoc.label}-ൽ നിന്ന് ആരംഭിക്കുക.`,
         instruction_kn: `${startLoc.label_kn || startLoc.label} ನಿಂದ ಪ್ರಾರಂಭಿಸಿ.`,
         icon_type: "start",
-        floor: coordinates[fromId]?.floor,
+        floor: activeCoords[fromId]?.floor,
         landmarkImage: startLoc.image
     });
 
@@ -181,21 +177,19 @@ export const findGraphRoute = (fromId: string, toId: string) => {
         const next = pathIds[i + 1];
         const prev = i > 0 ? pathIds[i - 1] : null;
 
-        const p1 = prev ? coordinates[prev] : null; // Previous point
-        const p2 = coordinates[curr]; // Current point
-        const p3 = coordinates[next]; // Next point
+        const p1 = prev ? activeCoords[prev] : null;
+        const p2 = activeCoords[curr];
+        const p3 = activeCoords[next];
 
-        const currLandmark = landmarks[curr] || { label: curr, cue: "the area", image: undefined };
-        const nextLandmark = landmarks[next] || { label: next, cue: "the area", image: undefined };
+        const currLandmark = activeLandmarks[curr] || { label: curr, cue: "the area", image: undefined };
+        const nextLandmark = activeLandmarks[next] || { label: next, cue: "the area", image: undefined };
 
         let instruction = "";
         let icon = "straight";
         let stepImage: string | undefined = undefined;
 
-        // Check floor change
         if (p2.floor !== p3.floor) {
             const isLift = curr.includes("lift");
-            const method = isLift ? "Lift" : "Stairs";
             const direction = p3.floor > p2.floor ? "up" : "down";
 
             icon = isLift ? (direction === "up" ? "lift-up" : "lift-down") : (direction === "up" ? "stairs-up" : "stairs-down");
@@ -203,9 +197,8 @@ export const findGraphRoute = (fromId: string, toId: string) => {
             stepImage = currLandmark.image;
 
         } else {
-            // Same floor logic
             if (p1 && p1.floor === p2.floor) {
-                const turnDir = graph.getTurnDirection(p1, p2, p3);
+                const turnDir = activeGraph.getTurnDirection(p1, p2, p3);
 
                 stepImage = currLandmark.image;
 
@@ -217,23 +210,18 @@ export const findGraphRoute = (fromId: string, toId: string) => {
                     instruction = `Turn right at ${currLandmark.label}, near ${currLandmark.cue}.`;
                 } else {
                     icon = "straight";
-                    // If moving straight through a landmark
                     instruction = `Continue straight past ${currLandmark.label}. Keep ${currLandmark.cue} on your side using it as a guide.`;
                 }
             } else if (!prev) {
-                // First step from start
                 instruction = `Walk towards ${nextLandmark.label}. Look out for ${nextLandmark.cue}.`;
                 stepImage = nextLandmark.image;
             } else {
-                // Just arrived at floor from stairs/lift
                 instruction = `Exit the ${currLandmark.label} and proceed towards ${nextLandmark.label}.`;
                 stepImage = currLandmark.image;
             }
         }
 
-        // Add movement step
         if (instruction) {
-            // Simple translation logic (expand as needed)
             const instruction_ml = generateInstructionML(instruction, icon, currLandmark, nextLandmark, p3?.floor);
             const instruction_kn = generateInstructionKN(instruction, icon, currLandmark, nextLandmark, p3?.floor);
 
@@ -247,12 +235,11 @@ export const findGraphRoute = (fromId: string, toId: string) => {
             });
         }
 
-        // Destination Arrival
         if (i + 1 === pathIds.length - 1) {
             steps.push({
                 instruction: `You have reached ${nextLandmark.label}! It is right there by ${nextLandmark.cue}.`,
                 instruction_ml: `നിങ്ങൾ ${nextLandmark.label_ml || nextLandmark.label}-ൽ എത്തിച്ചേർന്നു!`,
-                instruction_kn: `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${nextLandmark.label_kn || nextLandmark.label} ತಲಪಿದೆ!`,
+                instruction_kn: `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${nextLandmark.label_kn || nextLandmark.label} ತಲುಪಿದೆ!`,
                 icon_type: "destination",
                 floor: p3.floor,
                 landmarkImage: nextLandmark.image

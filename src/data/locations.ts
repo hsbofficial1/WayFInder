@@ -8,36 +8,43 @@ export interface Location {
   floor: number;
   type: LocationType;
   isUnavailable?: boolean;
+  x?: number;
+  y?: number;
+  cue?: string;
+  cue_ml?: string;
+  cue_kn?: string;
+  image?: string;
 }
 
 export const locations: Location[] = [
-  // Ground Floor - Entry Points
-  { id: "main-gate", name: "Main Gate", name_ml: "പ്രധാന കവാടം", name_kn: "ಮುಖ್ಯ ದ್ವಾರ", floor: 0, type: "entry" },
-  { id: "reception", name: "Reception Desk", name_ml: "റിസപ്ഷൻ ഡെസ്ക്", name_kn: "ಸ್ವಾಗತ ಕೇಂದ್ರ", floor: 0, type: "entry" },
-  { id: "lobby", name: "Main Lobby", floor: 0, type: "entry" },
-  { id: "staircase-g", name: "Staircase (Ground)", floor: 0, type: "utility" },
-  { id: "lift-g", name: "Lift (Ground)", floor: 0, type: "utility" },
-  { id: "washroom-g", name: "Washroom (Ground)", name_ml: "ശുചിമുറി (താഴത്തെ നില)", name_kn: "ಶೌಚಾಲಯ (ನೆಲ)", floor: 0, type: "utility" },
-  { id: "cafeteria", name: "Cafeteria", name_ml: "കഫറ്റീരിയ", name_kn: "cafeteria", floor: 0, type: "hotspot" },
-  { id: "meeting-room-1", name: "Meeting Room 1", floor: 0, type: "room" },
+  // Ground Floor
+  { id: "reception", name: "Reception", floor: 0, type: "entry" },
+  { id: "asap-office", name: "Asap Office", floor: 0, type: "office" },
+  { id: "emergency-exit", name: "Emergency Exit", floor: 0, type: "utility" },
+  { id: "leap-ksum", name: "Leap / Kerala Startup Mission", floor: 0, type: "office" },
+  { id: "openmind-makerspace", name: "Openmind Makerspace", floor: 0, type: "hotspot" },
+  { id: "sane-room", name: "The Sane Room", floor: 0, type: "room" },
+  { id: "autonomous-auas", name: "Autonomous AUAS", floor: 0, type: "office" },
+  { id: "washroom-g", name: "Washroom 1", floor: 0, type: "utility" },
+  { id: "dining-hall", name: "Dining Hall", floor: 0, type: "hotspot" },
+  { id: "first-aid-room", name: "First Aid Room", floor: 0, type: "utility" },
+  { id: "staircase-g", name: "Stairs 1", floor: 0, type: "utility" },
+  { id: "lift-g", name: "Lift 1", floor: 0, type: "utility" },
 
   // First Floor
-  { id: "staircase-1", name: "Staircase (1st Floor)", floor: 1, type: "utility" },
-  { id: "lift-1", name: "Lift (1st Floor)", floor: 1, type: "utility" },
-  { id: "lab-a", name: "Lab A", floor: 1, type: "lab" },
-  { id: "lab-b", name: "Lab B", floor: 1, type: "lab" },
-  { id: "office-101", name: "Office 101", floor: 1, type: "office" },
-  { id: "office-102", name: "Office 102", floor: 1, type: "office" },
-  { id: "washroom-1", name: "Washroom (1st Floor)", floor: 1, type: "utility" },
-  { id: "break-room", name: "Break Room", floor: 1, type: "hotspot" },
-
-  // Second Floor
-  { id: "staircase-2", name: "Staircase (2nd Floor)", floor: 2, type: "utility" },
-  { id: "lift-2", name: "Lift (2nd Floor)", floor: 2, type: "utility" },
-  { id: "server-room", name: "Server Room", floor: 2, type: "room" },
-  { id: "conference-hall", name: "Conference Hall", floor: 2, type: "room" },
-  { id: "desk-area", name: "Open Desk Area", floor: 2, type: "hotspot" },
-  { id: "washroom-2", name: "Washroom (2nd Floor)", floor: 2, type: "utility" },
+  { id: "rappin-range", name: "Rappin' Range", floor: 1, type: "room" },
+  { id: "crown-down", name: "Crown Down", floor: 1, type: "room" },
+  { id: "unknown-room", name: "Unknown Room", floor: 1, type: "room" },
+  { id: "link-admin-office", name: "Link Administrative Office", floor: 1, type: "office" },
+  { id: "staircase-1", name: "Stairs 2", floor: 1, type: "utility" },
+  { id: "lift-1", name: "Lift 2", floor: 1, type: "utility" },
+  { id: "foursquare-link", name: "Foursquare Link", floor: 1, type: "office" },
+  { id: "noodlin-space", name: "Noodlin' Space", floor: 1, type: "hotspot" },
+  { id: "cranium-room", name: "Cranium Room", floor: 1, type: "room" },
+  { id: "server-room-1", name: "Server Room", floor: 1, type: "utility" },
+  { id: "focus-space", name: "Focus Space", floor: 1, type: "hotspot" },
+  { id: "washroom-1", name: "Washroom 2", floor: 1, type: "utility" },
+  { id: "curiosity-weekends", name: "Curiosity Weekends", floor: 1, type: "hotspot" },
 ];
 
 export const entryPoints = locations.filter(
