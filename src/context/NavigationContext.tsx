@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode, type FC } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode, type FC } from "react";
 import { locations as initialLocations, Location } from "@/data/locations";
 import { routes as initialRoutes, Route } from "@/data/routes";
 import { floors as initialFloors, Floor } from "@/data/floors";
@@ -57,6 +57,7 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
 
     // Initialize from LocalStorage or Defaults
     useEffect(() => {
+        let active = true;
         try {
             const storedLocations = localStorage.getItem("locations");
             const storedRoutes = localStorage.getItem("routes_v3");
@@ -66,32 +67,37 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
             const storedMaps = localStorage.getItem("floorMaps");
             const storedEdges = localStorage.getItem("edges");
 
-            if (storedLocations) setLocations(JSON.parse(storedLocations));
-            else setLocations(initialLocations);
+            if (active) {
+                if (storedLocations) setLocations(JSON.parse(storedLocations));
+                else setLocations(initialLocations);
 
-            if (storedRoutes) setRoutes(JSON.parse(storedRoutes));
-            else setRoutes(initialRoutes);
+                if (storedRoutes) setRoutes(JSON.parse(storedRoutes));
+                else setRoutes(initialRoutes);
 
-            if (storedFloors) setFloors(JSON.parse(storedFloors));
-            else setFloors(initialFloors);
+                if (storedFloors) setFloors(JSON.parse(storedFloors));
+                else setFloors(initialFloors);
 
-            if (storedFeedback) setFeedback(JSON.parse(storedFeedback));
-            if (storedStats) setStats(JSON.parse(storedStats));
-            if (storedMaps) setFloorMaps(JSON.parse(storedMaps));
-            if (storedEdges) setEdges(JSON.parse(storedEdges));
-            else setEdges([]);
+                if (storedFeedback) setFeedback(JSON.parse(storedFeedback));
+                if (storedStats) setStats(JSON.parse(storedStats));
+                if (storedMaps) setFloorMaps(JSON.parse(storedMaps));
+                if (storedEdges) setEdges(JSON.parse(storedEdges));
+                else setEdges([]);
 
-            setIsInitialized(true);
+                setIsInitialized(true);
+            }
         } catch (e) {
             console.error("Failed to load state from localStorage:", e);
-            setLocations(initialLocations);
-            setRoutes(initialRoutes);
-            setFloors(initialFloors);
-            setIsInitialized(true);
+            if (active) {
+                setLocations(initialLocations);
+                setRoutes(initialRoutes);
+                setFloors(initialFloors);
+                setIsInitialized(true);
+            }
         }
+        return () => { active = false; };
     }, []);
 
-    // Persistence Effects
+    // Persistence Effects (Debounced slightly by React render cycle)
     useEffect(() => { if (isInitialized) localStorage.setItem("locations", JSON.stringify(locations)); }, [locations, isInitialized]);
     useEffect(() => { if (isInitialized) localStorage.setItem("routes_v3", JSON.stringify(routes)); }, [routes, isInitialized]);
     useEffect(() => { if (isInitialized) localStorage.setItem("floors", JSON.stringify(floors)); }, [floors, isInitialized]);
@@ -198,32 +204,41 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.clear();
     }, []);
 
+    const contextValue = useMemo(() => ({
+        locations,
+        routes,
+        floors,
+        feedback,
+        stats,
+        floorMaps,
+        addLocation,
+        updateLocation,
+        deleteLocation,
+        addRoute,
+        updateRoute,
+        deleteRoute,
+        addFloor,
+        updateFloor,
+        deleteFloor,
+        setFloorMap,
+        addFeedback,
+        recordNavigation,
+        resetToDefaults,
+        edges,
+        addEdge,
+        updateEdge,
+        deleteEdge
+    }), [
+        locations, routes, floors, feedback, stats, floorMaps,
+        addLocation, updateLocation, deleteLocation,
+        addRoute, updateRoute, deleteRoute,
+        addFloor, updateFloor, deleteFloor,
+        setFloorMap, addFeedback, recordNavigation, resetToDefaults,
+        edges, addEdge, updateEdge, deleteEdge
+    ]);
+
     return (
-        <NavigationContext.Provider value={{
-            locations,
-            routes,
-            floors,
-            feedback,
-            stats,
-            floorMaps,
-            addLocation,
-            updateLocation,
-            deleteLocation,
-            addRoute,
-            updateRoute,
-            deleteRoute,
-            addFloor,
-            updateFloor,
-            deleteFloor,
-            setFloorMap,
-            addFeedback,
-            recordNavigation,
-            resetToDefaults,
-            edges,
-            addEdge,
-            updateEdge,
-            deleteEdge
-        }}>
+        <NavigationContext.Provider value={contextValue}>
             {children}
         </NavigationContext.Provider>
     );

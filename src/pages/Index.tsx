@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Navigation,
   AlertCircle,
@@ -45,9 +45,14 @@ const Index = () => {
   useEffect(() => {
     if (searchTriggered && !isSearching) {
       if (foundRoute) {
+        // Atomic update to transition view
         setActiveRoute(foundRoute);
         setSearchTriggered(false);
-        recordNavigation(true, to);
+        // Defer statistics recording slightly to allow render to settle
+        const timer = setTimeout(() => {
+          recordNavigation(true, to);
+        }, 300);
+        return () => clearTimeout(timer);
       } else if (foundRoute === null) {
         setError("Sorry, no route found between these locations. Try different points.");
         setSearchTriggered(false);
@@ -56,7 +61,7 @@ const Index = () => {
     }
   }, [searchTriggered, isSearching, foundRoute, to, recordNavigation]);
 
-  const handleShowRoute = () => {
+  const handleShowRoute = useCallback(() => {
     setError("");
     if (!from || !to) {
       setError("Please select both a starting point and destination.");
@@ -67,22 +72,22 @@ const Index = () => {
       return;
     }
     setSearchTriggered(true);
-  };
+  }, [from, to]);
 
-  const handleRestart = () => {
+  const handleRestart = useCallback(() => {
     setActiveRoute(null);
     setFrom("");
     setTo("");
     setError("");
     setSearchTriggered(false);
-  };
+  }, []);
 
-  const handleLost = () => {
+  const handleLost = useCallback(() => {
     setActiveRoute(null);
     setFrom("");
     setSearchTriggered(false);
     setError("Please re-select your current location to update the route.");
-  };
+  }, []);
 
   if (activeRoute) {
     return <StepView route={activeRoute} onRestart={handleRestart} onLost={handleLost} />;
