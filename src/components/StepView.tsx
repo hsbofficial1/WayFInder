@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -60,7 +61,6 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   }, [currentStep]);
 
   const handleNext = useCallback(() => {
-    // Simple vibration only, removed AudioContext to avoid potential browser crashes/leaks
     if (typeof navigator !== "undefined" && navigator.vibrate) {
       navigator.vibrate(50);
     }
@@ -257,9 +257,12 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
 
       {/* Feedback Dialog */}
       <Dialog open={showFeedback} onOpenChange={setShowFeedback}>
-        <DialogContent className="sm:max-w-md rounded-3xl">
+        <DialogContent className="sm:max-w-md rounded-3xl" aria-describedby="feedback-description">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center">How was your journey?</DialogTitle>
+            <DialogDescription id="feedback-description" className="text-center">
+              Your feedback help us improve building navigation for everyone.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-6 py-6">
             <div className="flex gap-2">

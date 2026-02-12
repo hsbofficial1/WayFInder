@@ -103,9 +103,9 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
         >
             {/* Loading Overlay */}
             {isLoading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/10 backdrop-blur-sm z-10 transition-opacity">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/10 backdrop-blur-sm z-20">
                     <Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Loading Panorama...</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Loading Panorama...</span>
                 </div>
             )}
 
@@ -113,33 +113,40 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
             {isError && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/5 text-destructive z-10 p-6 text-center">
                     <p className="text-sm font-bold">Image failed to load</p>
-                    <p className="text-xs opacity-70">Check your network connection</p>
                 </div>
             )}
 
-            {/* The Panorama Image Layer */}
+            {/* The Panorama Image Layer - OPTIMIZED WITH TRANSLATE3D */}
             {!isLoading && !isError && (
                 <div
-                    className="w-full h-full absolute inset-0 transition-opacity duration-500"
+                    className="absolute inset-0 w-[300%] h-full flex"
                     style={{
-                        backgroundImage: `url("${imageSrc}")`,
-                        backgroundPosition: `${currentX}px center`,
-                        backgroundSize: `auto ${zoomLevel}%`,
-                        backgroundRepeat: 'repeat-x',
-                        opacity: isLoading ? 0 : 1
+                        transform: `translate3d(${currentX % containerRef.current?.offsetWidth || 0}px, 0, 0)`,
+                        willChange: 'transform'
                     }}
-                    role="img"
-                    aria-label="360 Panorama View"
-                />
+                >
+                    <div
+                        className="w-1/3 h-full bg-center bg-no-repeat bg-cover"
+                        style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }}
+                    />
+                    <div
+                        className="w-1/3 h-full bg-center bg-no-repeat bg-cover"
+                        style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }}
+                    />
+                    <div
+                        className="w-1/3 h-full bg-center bg-no-repeat bg-cover"
+                        style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }}
+                    />
+                </div>
             )}
 
             {/* Controls Overlay */}
             {!isLoading && !isError && (
-                <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
                     <Button
                         variant="secondary"
                         size="icon"
-                        className="bg-black/60 text-white hover:bg-black/80 w-10 h-10 rounded-full backdrop-blur-md border-none shadow-xl"
+                        className="bg-black/60 text-white hover:bg-black/80 w-10 h-10 rounded-full backdrop-blur-md"
                         onClick={handleZoomOut}
                         disabled={zoomLevel <= 100}
                     >
@@ -148,7 +155,7 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
                     <Button
                         variant="secondary"
                         size="icon"
-                        className="bg-black/60 text-white hover:bg-black/80 w-10 h-10 rounded-full backdrop-blur-md border-none shadow-xl"
+                        className="bg-black/60 text-white hover:bg-black/80 w-10 h-10 rounded-full backdrop-blur-md"
                         onClick={handleZoomIn}
                         disabled={zoomLevel >= 300}
                     >
@@ -160,8 +167,8 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
             {/* Hint Overlay */}
             {!isLoading && !isError && !isDragging && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-700">
-                    <div className="bg-black/40 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold flex items-center gap-3 shadow-2xl animate-pulse">
-                        <Move size={16} />
+                    <div className="bg-black/40 backdrop-blur-md text-white px-4 py-2 rounded-full text-[10px] font-bold flex items-center gap-3 animate-pulse">
+                        <Move size={14} />
                         DRAG TO ROTATE
                     </div>
                 </div>

@@ -97,14 +97,28 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
         return () => { active = false; };
     }, []);
 
-    // Persistence Effects (Debounced slightly by React render cycle)
-    useEffect(() => { if (isInitialized) localStorage.setItem("locations", JSON.stringify(locations)); }, [locations, isInitialized]);
-    useEffect(() => { if (isInitialized) localStorage.setItem("routes_v3", JSON.stringify(routes)); }, [routes, isInitialized]);
-    useEffect(() => { if (isInitialized) localStorage.setItem("floors", JSON.stringify(floors)); }, [floors, isInitialized]);
-    useEffect(() => { if (isInitialized) localStorage.setItem("feedback", JSON.stringify(feedback)); }, [feedback, isInitialized]);
-    useEffect(() => { if (isInitialized) localStorage.setItem("usageStats", JSON.stringify(stats)); }, [stats, isInitialized]);
-    useEffect(() => { if (isInitialized) localStorage.setItem("floorMaps", JSON.stringify(floorMaps)); }, [floorMaps, isInitialized]);
-    useEffect(() => { if (isInitialized) localStorage.setItem("edges", JSON.stringify(edges)); }, [edges, isInitialized]);
+    // CONSOLIDATED AND DEBOUNCED PERSISTENCE
+    // This is much more efficient than 7 separate effects, 
+    // especially for "App Not Responding" prevents.
+    useEffect(() => {
+        if (!isInitialized) return;
+
+        const timer = setTimeout(() => {
+            try {
+                localStorage.setItem("locations", JSON.stringify(locations));
+                localStorage.setItem("routes_v3", JSON.stringify(routes));
+                localStorage.setItem("floors", JSON.stringify(floors));
+                localStorage.setItem("feedback", JSON.stringify(feedback));
+                localStorage.setItem("usageStats", JSON.stringify(stats));
+                localStorage.setItem("floorMaps", JSON.stringify(floorMaps));
+                localStorage.setItem("edges", JSON.stringify(edges));
+            } catch (e) {
+                console.warn("Storage sync failed (likely quota exceeded or private mode):", e);
+            }
+        }, 1000); // 1s debounce for heavy JSON operations
+
+        return () => clearTimeout(timer);
+    }, [locations, routes, floors, feedback, stats, floorMaps, edges, isInitialized]);
 
     const addLocation = useCallback((location: Location) => {
         setLocations(prev => [...prev, location]);

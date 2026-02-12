@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { Check, ChevronsUpDown, Search, MapPin, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { useLocations, locationTypeLabels, getFloorLabel } from "@/hooks/useNavigation";
 
 interface LocationSelectorProps {
@@ -38,33 +37,32 @@ const LocationSelector = ({
   const { data: locations, isLoading } = useLocations();
   const { language, t } = useLanguage();
 
-  const getName = (loc: any) => {
+  const getName = useCallback((loc: any) => {
+    if (!loc) return "";
     if (language === 'ml') return loc.name_ml || loc.name;
     if (language === 'kn') return loc.name_kn || loc.name;
     return loc.name;
-  };
+  }, [language]);
 
-  const selectedLocation = locations?.find((l) => l.id === value);
+  const selectedLocation = useMemo(() => locations?.find((l) => l.id === value), [locations, value]);
 
   // Filter and group locations
   const filteredLocations = useMemo(() => {
     if (!locations) return [];
 
-    let filtered = locations.filter((l) => {
+    return locations.filter((l) => {
       if (excludeId && l.id === excludeId) return false;
       if (search) {
         const query = search.toLowerCase();
         const name = getName(l).toLowerCase();
         return (
           name.includes(query) ||
-          locationTypeLabels[l.type].toLowerCase().includes(query)
+          locationTypeLabels[l.type]?.toLowerCase().includes(query)
         );
       }
       return true;
     });
-
-    return filtered;
-  }, [locations, excludeId, search]);
+  }, [locations, excludeId, search, getName]);
 
   const groupedLocations = useMemo(() => {
     const groups: Record<number, typeof filteredLocations> = {};
@@ -77,15 +75,19 @@ const LocationSelector = ({
     return groups;
   }, [filteredLocations]);
 
-  const sortedFloors = Object.keys(groupedLocations)
+  const sortedFloors = useMemo(() => Object.keys(groupedLocations)
     .map(Number)
-    .sort((a, b) => a - b);
+    .sort((a, b) => a - b), [groupedLocations]);
 
-  const handleSelect = (id: string) => {
-    onChange(id);
+  const handleSelect = useCallback((id: string) => {
+    // Close first, then defer state change to allow Radix/Vaul 
+    // to manage the aria-hidden state correctly before the DOM potentially changes.
     setOpen(false);
     setSearch("");
-  };
+    setTimeout(() => {
+      onChange(id);
+    }, 50);
+  }, [onChange]);
 
   if (isLoading) {
     return (
