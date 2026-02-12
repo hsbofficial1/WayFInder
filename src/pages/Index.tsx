@@ -22,14 +22,14 @@ const Index = () => {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [activeRoute, setActiveRoute] = useState<RouteWithSteps | null>(null);
-  const [greeting, setGreeting] = useState("Hello");
+  const [greeting, setGreeting] = useState("greeting_hello");
   const { locations } = useNavigationContext();
 
   useEffect(() => {
     const hour = new Date().getHours();
-    if (hour < 12) setGreeting("Good Morning");
-    else if (hour < 18) setGreeting("Good Afternoon");
-    else setGreeting("Good Evening");
+    if (hour < 12) setGreeting("greeting_morning");
+    else if (hour < 18) setGreeting("greeting_afternoon");
+    else setGreeting("greeting_evening");
   }, []);
 
   const handleShowRoute = () => {
@@ -110,14 +110,11 @@ const Index = () => {
     <div className="min-h-dvh flex flex-col bg-background selection:bg-primary/20">
       {/* Header */}
       <header className="px-6 pt-5 pb-2 flex justify-between items-center z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm">
-            <Navigation size={20} className="fill-current" />
+        <div className="flex items-center gap-2">
+          <div className="bg-primary/10 p-2 rounded-xl backdrop-blur-md border border-primary/10">
+            <Navigation className="text-primary w-6 h-6" />
           </div>
-          <div>
-            <span className="font-bold text-lg tracking-tight leading-none block">WayFinder</span>
-            <span className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">Indoor Guide</span>
-          </div>
+          <span className="font-bold text-xl tracking-tight text-foreground">WayFinder</span>
         </div>
         <LanguageSwitcher />
       </header>
@@ -128,9 +125,9 @@ const Index = () => {
         {/* Hero / Greeting */}
         <div className="pt-6 space-y-1 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <h1 className="text-3xl font-extrabold text-foreground tracking-tight leading-tight">
-            {greeting},
+            {t(greeting)},
           </h1>
-          <p className="text-lg text-muted-foreground font-medium">Where would you like to go?</p>
+          <p className="text-lg text-muted-foreground font-medium">{t('where_would_you_like_to_go')}</p>
         </div>
 
         {/* Input Cards */}
@@ -145,14 +142,14 @@ const Index = () => {
                 value={from}
                 onChange={setFrom}
                 label=""
-                placeholder="Start Point"
+                placeholder={t('start_point')}
                 icon={<></>}
               />
             </div>
             {/* Custom styling override */}
             <style>{`
-               .group:first-child button { 
-                 padding-left: 3.5rem !important; 
+               .group:first-child button {
+                 padding-left: 3.5rem !important;
                  height: 4.5rem !important;
                  border-radius: 1.5rem 1.5rem 0.5rem 0.5rem !important;
                  background: var(--card) !important;
@@ -175,14 +172,14 @@ const Index = () => {
                 value={to}
                 onChange={setTo}
                 label=""
-                placeholder="Destination"
+                placeholder={t('destination')}
                 excludeId={from}
                 icon={<></>}
               />
             </div>
             <style>{`
-               .group:last-child button { 
-                 padding-left: 3.5rem !important; 
+               .group:last-child button {
+                 padding-left: 3.5rem !important;
                  height: 4.5rem !important;
                  border-radius: 0.5rem 0.5rem 1.5rem 1.5rem !important;
                  background: var(--card) !important;
@@ -201,19 +198,19 @@ const Index = () => {
             className="w-full h-16 text-lg font-bold rounded-2xl shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all hover:scale-[1.02] active:scale-[0.98] bg-primary text-primary-foreground gap-2"
             size="lg"
           >
-            Start Navigation
+            {t('start_navigation')}
             <ArrowRight className="w-5 h-5" />
           </Button>
         </div>
 
         {/* Quick Access */}
         <div className="pt-4 animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200">
-          <p className="text-xs font-bold text-muted-foreground mb-4 uppercase tracking-wider pl-1">Quick Access</p>
+          <p className="text-xs font-bold text-muted-foreground mb-4 uppercase tracking-wider pl-1">{t('quick_access')}</p>
           <div className="grid grid-cols-2 gap-3">
-            <QuickCard icon="☕" label="Cafeteria" onClick={() => quickSelect('cafe')} />
-            <QuickCard icon="🚻" label="Restroom" onClick={() => quickSelect('utility')} />
-            <QuickCard icon="🚪" label="Exit" onClick={() => quickSelect('entry')} />
-            <QuickCard icon="💼" label="Office" onClick={() => quickSelect('office')} />
+            <QuickCard icon="☕" label={t('qa_cafeteria')} onClick={() => quickSelect('cafe')} />
+            <QuickCard icon="🚻" label={t('qa_restroom')} onClick={() => quickSelect('utility')} />
+            <QuickCard icon="🚪" label={t('qa_exit')} onClick={() => quickSelect('entry')} />
+            <QuickCard icon="💼" label={t('qa_office')} onClick={() => quickSelect('office')} />
           </div>
         </div>
 
@@ -223,7 +220,7 @@ const Index = () => {
       <footer className="p-6 pt-0 mt-auto text-center animate-in fade-in duration-1000 delay-500">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 text-[10px] font-medium text-muted-foreground border border-border/50 backdrop-blur-sm">
           <Info size={12} />
-          <span>Offline Capable • No GPS Needed</span>
+          <span>{t('offline_capable')} • {t('no_gps_needed')}</span>
         </div>
       </footer>
     </div>

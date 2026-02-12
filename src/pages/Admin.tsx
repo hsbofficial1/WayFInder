@@ -39,7 +39,9 @@ import {
     MoreHorizontal,
     Search,
     GripVertical,
-    ArrowRight
+    ArrowRight,
+    PanelLeftClose,
+    PanelLeftOpen
 } from "lucide-react";
 import { toast } from "sonner";
 import { LocationType } from "@/data/locations";
@@ -65,6 +67,7 @@ export default function Admin() {
     const [searchTerm, setSearchTerm] = useState("");
 
     // --- STATE MANAGEMENT ---
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [sheetMode, setSheetMode] = useState<"location" | "route" | "floor" | null>(null);
     const [editingItem, setEditingItem] = useState<any>(null);
@@ -150,28 +153,46 @@ export default function Admin() {
     return (
         <div className="h-screen w-full bg-background flex overflow-hidden font-sans">
             {/* Sidebar */}
-            <aside className="w-64 border-r bg-muted/30 flex flex-col shrink-0 z-20">
-                <div className="p-6 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
+            <aside className={cn(
+                "border-r bg-muted/30 flex flex-col shrink-0 z-20 transition-all duration-300 ease-in-out",
+                isSidebarCollapsed ? "w-[70px]" : "w-64"
+            )}>
+                <div className={cn("p-6 flex items-center gap-3 relative", isSidebarCollapsed && "justify-center px-2")}>
+                    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shrink-0 shadow-lg shadow-primary/20">
                         <Layers size={18} />
                     </div>
-                    <div>
-                        <h1 className="font-bold tracking-tight">WayFinder</h1>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Admin Panel</p>
+
+                    <div className={cn("overflow-hidden transition-all duration-300", isSidebarCollapsed ? "w-0 opacity-0" : "w-auto opacity-100")}>
+                        <h1 className="font-bold tracking-tight whitespace-nowrap">WayFinder</h1>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold whitespace-nowrap">Admin Panel</p>
                     </div>
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn("absolute -right-3 top-7 h-6 w-6 rounded-full border bg-background shadow-sm hover:bg-accent z-30 flex", isSidebarCollapsed && "-right-3")}
+                        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                    >
+                        {isSidebarCollapsed ? <PanelLeftOpen size={12} /> : <PanelLeftClose size={12} />}
+                    </Button>
                 </div>
 
-                <nav className="flex-1 px-4 space-y-1">
-                    <NavItem active={activeView === "dashboard"} onClick={() => setActiveView("dashboard")} icon={<BarChart3 size={18} />} label="Overview" />
-                    <NavItem active={activeView === "locations"} onClick={() => setActiveView("locations")} icon={<MapPin size={18} />} label="Locations" count={locations.length} />
-                    <NavItem active={activeView === "routes"} onClick={() => setActiveView("routes")} icon={<RouteIcon size={18} />} label="Routes" count={routes.length} />
-                    <NavItem active={activeView === "floors"} onClick={() => setActiveView("floors")} icon={<Layers size={18} />} label="Floors" count={floors.length} />
-                    <NavItem active={activeView === "feedback"} onClick={() => setActiveView("feedback")} icon={<MessageSquare size={18} />} label="Feedback" count={feedback.length} />
+                <nav className="flex-1 px-3 space-y-1 mt-2">
+                    <NavItem active={activeView === "dashboard"} onClick={() => setActiveView("dashboard")} icon={<BarChart3 size={18} />} label="Overview" collapsed={isSidebarCollapsed} />
+                    <NavItem active={activeView === "locations"} onClick={() => setActiveView("locations")} icon={<MapPin size={18} />} label="Locations" count={locations.length} collapsed={isSidebarCollapsed} />
+                    <NavItem active={activeView === "routes"} onClick={() => setActiveView("routes")} icon={<RouteIcon size={18} />} label="Routes" count={routes.length} collapsed={isSidebarCollapsed} />
+                    <NavItem active={activeView === "floors"} onClick={() => setActiveView("floors")} icon={<Layers size={18} />} label="Floors" count={floors.length} collapsed={isSidebarCollapsed} />
+                    <NavItem active={activeView === "feedback"} onClick={() => setActiveView("feedback")} icon={<MessageSquare size={18} />} label="Feedback" count={feedback.length} collapsed={isSidebarCollapsed} />
                 </nav>
 
                 <div className="p-4 border-t bg-muted/10">
-                    <Button variant="outline" className="w-full gap-2 justify-start" asChild>
-                        <a href="/" target="_blank"><Eye size={16} /> Open Live App</a>
+                    <Button variant="outline" className={cn("w-full gap-2 transition-all", isSidebarCollapsed ? "justify-center px-0" : "justify-start")} asChild>
+                        <a href="/" target="_blank" title="Open Live App">
+                            <Eye size={16} />
+                            <span className={cn("transition-all duration-300 overflow-hidden", isSidebarCollapsed ? "w-0 opacity-0" : "w-auto opacity-100 ml-1")}>
+                                Live App
+                            </span>
+                        </a>
                     </Button>
                 </div>
             </aside>
@@ -264,7 +285,7 @@ export default function Admin() {
                                                     <span>{locations.find(l => l.id === route.to)?.name || route.to}</span>
                                                 </div>
                                                 <div className="text-sm text-muted-foreground flex gap-2 mt-1">
-                                                    <Badge variant="secondary" className="text-[10px] h-5">{route.id}</Badge>
+                                                    <Badge variant="secondary" className="text-[10px] h-5">Manual</Badge>
                                                     <span>{route.steps.length} steps defined</span>
                                                 </div>
                                             </div>
@@ -279,6 +300,58 @@ export default function Admin() {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        )}
+
+                        {activeView === "floors" && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {floors.map(floor => (
+                                    <div
+                                        key={floor.id}
+                                        className="flex items-center justify-between p-4 bg-card border border-border/60 rounded-xl hover:shadow-sm transition-all group cursor-pointer"
+                                        onClick={() => openSheet("floor", floor)}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-xl font-bold text-primary">
+                                                {floor.number}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold">{floor.label}</h3>
+                                                <p className="text-sm text-muted-foreground">ID: {floor.id}</p>
+                                            </div>
+                                        </div>
+                                        <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); deleteFloor(floor.id); }}>
+                                            <Trash2 size={16} className="text-destructive" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {activeView === "feedback" && (
+                            <div className="space-y-4">
+                                {feedback.length === 0 ? (
+                                    <div className="text-center py-12 text-muted-foreground">No feedback received yet.</div>
+                                ) : (
+                                    feedback.map((item: any, i: number) => (
+                                        <div key={i} className="p-4 bg-card border border-border/60 rounded-xl">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex gap-1">
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <span key={star} className={`text-lg ${star <= item.rating ? "text-amber-400" : "text-muted/30"}`}>★</span>
+                                                    ))}
+                                                </div>
+                                                <span className="text-xs text-muted-foreground">{new Date().toLocaleDateString()}</span>
+                                            </div>
+                                            <p className="text-sm font-medium mb-3">"{item.comment || "No comment"}"</p>
+                                            <div className="flex gap-2 text-xs text-muted-foreground bg-muted/20 p-2 rounded-lg inline-flex">
+                                                <span>From: <b>{locations.find(l => l.id === item.from)?.name || item.from}</b></span>
+                                                <span>→</span>
+                                                <span>To: <b>{locations.find(l => l.id === item.to)?.name || item.to}</b></span>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         )}
 
@@ -399,6 +472,19 @@ export default function Admin() {
                                 </div>
                             </div>
                         )}
+
+                        {sheetMode === "floor" && (
+                            <div className="space-y-4">
+                                <div className="grid gap-2">
+                                    <Label>Floor Number</Label>
+                                    <Input type="number" value={floorForm.number} onChange={e => setFloorForm({ ...floorForm, number: e.target.value })} placeholder="0" />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label>Label</Label>
+                                    <Input value={floorForm.label} onChange={e => setFloorForm({ ...floorForm, label: e.target.value })} placeholder="e.g. Ground Floor" />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <SheetFooter className="p-6 border-t bg-muted/10 absolute bottom-0 w-full">
@@ -413,19 +499,21 @@ export default function Admin() {
 }
 
 // Subcomponents
-const NavItem = ({ active, onClick, icon, label, count }: any) => (
+const NavItem = ({ active, onClick, icon, label, count, collapsed }: any) => (
     <button
         onClick={onClick}
+        title={collapsed ? label : undefined}
         className={cn(
-            "w-full flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all group",
-            active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            "w-full flex items-center p-3 rounded-lg text-sm font-medium transition-all group",
+            active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            collapsed ? "justify-center" : "justify-between"
         )}
     >
         <div className="flex items-center gap-3">
             {React.cloneElement(icon, { size: 18, className: active ? "text-primary" : "text-muted-foreground group-hover:text-foreground" })}
-            <span>{label}</span>
+            <span className={cn("transition-all duration-300 overflow-hidden", collapsed ? "w-0 opacity-0" : "w-auto opacity-100")}>{label}</span>
         </div>
-        {count !== undefined && (
+        {count !== undefined && !collapsed && (
             <span className="bg-background border px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm">{count}</span>
         )}
     </button>

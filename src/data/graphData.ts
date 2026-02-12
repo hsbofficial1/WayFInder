@@ -83,51 +83,161 @@ const landmarks: Record<string, {
     // Ground Floor
     "reception": {
         label: "Reception",
+        label_ml: "റിസപ്ഷൻ",
+        label_kn: "ಸ್ವಾಗತ ಕೌಂಟರ್",
         cue: "the main desk area",
         image: "https://photo-sphere-viewer.js.org/assets/sphere.jpg" // High quality indoor 360
     },
     "asap-office": {
         label: "Asap Office",
+        label_ml: "അസാപ് ഓഫീസ്",
+        label_kn: "ಅಸಾಪ್ ಕಚೇರಿ",
         cue: "the office with ASAP branding",
         image: "https://p1.pstatp.com/origin/pgc-image/4a1d47348981434f81c7e9f3b1742721" // Modern lobby 360
     },
-    "emergency-exit": { label: "Emergency Exit", cue: "the brightly lit exit sign" },
-    "leap-ksum": { label: "Leap / Kerala Startup Mission", cue: "the KSUM workspace" },
+    "emergency-exit": {
+        label: "Emergency Exit",
+        label_ml: "അടിയന്തര പുറത്തേക്കുള്ള വഴി",
+        label_kn: "ತುರ್ತು ನಿರ್ಗಮನ",
+        cue: "the brightly lit exit sign"
+    },
+    "leap-ksum": {
+        label: "Leap / Kerala Startup Mission",
+        label_ml: "ലീപ്പ് / കേരള സ്റ്റാർട്ടപ്പ് മിഷൻ",
+        label_kn: "ಲೀಪ್ / ಕೇರಳ ಸ್ಟಾರ್ಟಪ್ ಮಿಷನ್",
+        cue: "the KSUM workspace"
+    },
     "openmind-makerspace": {
         label: "Openmind Makerspace",
+        label_ml: "ഓപ്പൺമൈൻഡ് മേക്കർസ്പേസ്",
+        label_kn: "ಓಪನ್‌ಮೈಂಡ್ ಮೇಕರ್‌ಸ್ಪೇಸ್",
         cue: "the room with 3D printers and tools",
         image: "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/equirectangular/park.jpg" // Sample 360
     },
-    "sane-room": { label: "The Sane Room", cue: "the quiet zone" },
-    "autonomous-auas": { label: "Autonomous AUAS", cue: "the AUAS research lab" },
-    "washroom-g": { label: "Washroom 1", cue: "the restroom near Sane Room" },
+    "sane-room": {
+        label: "The Sane Room",
+        label_ml: "സെയ്ൻ റൂം",
+        label_kn: "ಸೇನ್ ಕೊಠಡಿ",
+        cue: "the quiet zone"
+    },
+    "autonomous-auas": {
+        label: "Autonomous AUAS",
+        label_ml: "ഓട്ടോണമസ് AUAS",
+        label_kn: "ಆಟೋನಮಸ್ AUAS",
+        cue: "the AUAS research lab"
+    },
+    "washroom-g": {
+        label: "Washroom 1",
+        label_ml: "ശുചിമുറി 1",
+        label_kn: "ಶೌಚಾಲಯ 1",
+        cue: "the restroom near Sane Room"
+    },
     "dining-hall": {
         label: "Dining Hall",
+        label_ml: "ഡൈനിംഗ് ഹാൾ",
+        label_kn: "ಊಟದ ಹಾಲ್",
         cue: "the large hall with tables",
         image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000"
     },
-    "first-aid-room": { label: "First Aid Room", cue: "the room with a medical cross" },
-    "staircase-g": { label: "Stairs 1", cue: "the main stairs" },
-    "lift-g": { label: "Lift 1", cue: "the elevator bank" },
+    "first-aid-room": {
+        label: "First Aid Room",
+        label_ml: "പ്രഥമശുശ്രൂഷാ മുറി",
+        label_kn: "ಪ್ರಥಮ ಚಿಕಿತ್ಸಾ ಕೊಠಡಿ",
+        cue: "the room with a medical cross"
+    },
+    "staircase-g": {
+        label: "Stairs 1",
+        label_ml: "കോണിപ്പടി 1",
+        label_kn: "ಮೆಟ್ಟಿಲು 1",
+        cue: "the main stairs"
+    },
+    "lift-g": {
+        label: "Lift 1",
+        label_ml: "ലിഫ്റ്റ് 1",
+        label_kn: "ಲಿಫ್ಟ್ 1",
+        cue: "the elevator bank"
+    },
 
     // 1st Floor
     "rappin-range": {
         label: "Rappin' Range",
+        label_ml: "റാപ്പിൻ റേഞ്ച്",
+        label_kn: "ರಾಪ್ಪಿನ್ ರೇಂಜ್",
         cue: "the area with soundproofing",
         image: "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/22ed7856b3e84325a728b7f5e3b5e4c0~tplv-k3u1fbpfcp-watermark.image" // Studio-like 360
     },
-    "crown-down": { label: "Crown Down", cue: "the chill area" },
-    "unknown-room": { label: "Unknown Room", cue: "the unmarked door" },
-    "link-admin-office": { label: "Link Administrative Office", cue: "the admin hub" },
-    "staircase-1": { label: "Stairs 2", cue: "the upper stairs landing" },
-    "lift-1": { label: "Lift 2", cue: "the upper elevator lobby" },
-    "foursquare-link": { label: "Foursquare Link", cue: "the networking space" },
-    "noodlin-space": { label: "Noodlin' Space", cue: "the creative corner" },
-    "cranium-room": { label: "Cranium Room", cue: "the brainstorming room" },
-    "server-room-1": { label: "Server Room", cue: "the secure room with server racks" },
-    "focus-space": { label: "Focus Space", cue: "the individual work pods" },
-    "washroom-1": { label: "Washroom 2", cue: "the upper floor restroom" },
-    "curiosity-weekends": { label: "Curiosity Weekends", cue: "the event space" },
+    "crown-down": {
+        label: "Crown Down",
+        label_ml: "ക്രൗൺ ഡൗൺ",
+        label_kn: "ಕ್ರೌನ್ ಡೌನ್",
+        cue: "the chill area"
+    },
+    "unknown-room": {
+        label: "Unknown Room",
+        label_ml: "അറിയപ്പെടാത്ത മുറി",
+        label_kn: "ತಿಳಿಯದ ಕೊಠಡಿ",
+        cue: "the unmarked door"
+    },
+    "link-admin-office": {
+        label: "Link Administrative Office",
+        label_ml: "ലിങ്ക് അഡ്മിനിസ്ട്രേറ്റീവ് ഓഫീസ്",
+        label_kn: "ಲಿಂಕ್ ಆಡಳಿತ ಕಚೇರಿ",
+        cue: "the admin hub"
+    },
+    "staircase-1": {
+        label: "Stairs 2",
+        label_ml: "കോണിപ്പടി 2",
+        label_kn: "ಮೆಟ್ಟಿಲು 2",
+        cue: "the upper stairs landing"
+    },
+    "lift-1": {
+        label: "Lift 2",
+        label_ml: "ലിഫ്റ്റ് 2",
+        label_kn: "ಲಿಫ್ಟ್ 2",
+        cue: "the upper elevator lobby"
+    },
+    "foursquare-link": {
+        label: "Foursquare Link",
+        label_ml: "ഫോർസ്ക്വയർ ലിങ്ക്",
+        label_kn: "ಫೋರ್‌ಸ್ಕ್ವೇರ್ ಲಿಂಕ್",
+        cue: "the networking space"
+    },
+    "noodlin-space": {
+        label: "Noodlin' Space",
+        label_ml: "നൂഡ്ലിൻ സ്പേസ്",
+        label_kn: "ನೂಡ್ಲಿನ್ ಸ್ಪೇಸ್",
+        cue: "the creative corner"
+    },
+    "cranium-room": {
+        label: "Cranium Room",
+        label_ml: "ക്രനിയം റൂം",
+        label_kn: "ಕ್ರೇನಿಯಂ ಕೊಠಡಿ",
+        cue: "the brainstorming room"
+    },
+    "server-room-1": {
+        label: "Server Room",
+        label_ml: "സെർവർ റൂം",
+        label_kn: "ಸರ್ವರ್ ಕೊಠಡಿ",
+        cue: "the secure room with server racks"
+    },
+    "focus-space": {
+        label: "Focus Space",
+        label_ml: "ഫോക്കസ് സ്പേസ്",
+        label_kn: "ಫೋಕಸ್ ಸ್ಪೇಸ್",
+        cue: "the individual work pods"
+    },
+    "washroom-1": {
+        label: "Washroom 2",
+        label_ml: "ശുചിമുറി 2",
+        label_kn: "ಶೌಚಾಲಯ 2",
+        cue: "the upper floor restroom"
+    },
+    "curiosity-weekends": {
+        label: "Curiosity Weekends",
+        label_ml: "ക്യൂറിയോസിറ്റി വീക്കെൻഡ്സ്",
+        label_kn: "ಕ್ಯೂರಿಯಾಸಿಟಿ ವೀಕೆಂಡ್ಸ್",
+        cue: "the event space"
+    },
 };
 
 export interface RouteStep {
