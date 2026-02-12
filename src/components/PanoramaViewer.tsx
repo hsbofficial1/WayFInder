@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect } from "react";
-import { ZoomIn, ZoomOut, Move } from "lucide-react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
+import { ZoomIn, ZoomOut, Move, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PanoramaViewerProps {
@@ -13,56 +13,76 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
     const [isDragging, setIsDragging] = useState(false);
     const [startX, setStartX] = useState(0);
     const [currentX, setCurrentX] = useState(0);
-    const [zoomLevel, setZoomLevel] = useState(initialZoom); // Percentage, 100% = fit height
+    const [zoomLevel, setZoomLevel] = useState(initialZoom);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isError, setIsError] = useState(false);
 
-    // Calculate movement sensitivity based on zoom
-    const sensitivity = 0.5;
+    // Image Preloader
+    useEffect(() => {
+        setIsLoading(true);
+        setIsError(false);
 
-    const handleMouseDown = (e: React.MouseEvent) => {
+        const img = new Image();
+        img.src = imageSrc;
+
+        img.onload = () => {
+            setIsLoading(false);
+        };
+
+        img.onerror = () => {
+            setIsLoading(false);
+            setIsError(true);
+        };
+
+        return () => {
+            img.onload = null;
+            img.onerror = null;
+        };
+    }, [imageSrc]);
+
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        if (isLoading || isError) return;
         setIsDragging(true);
         setStartX(e.clientX - currentX);
-    };
+    }, [currentX, isLoading, isError]);
 
-    const handleTouchStart = (e: React.TouchEvent) => {
+    const handleTouchStart = useCallback((e: React.TouchEvent) => {
+        if (isLoading || isError) return;
         setIsDragging(true);
         setStartX(e.touches[0].clientX - currentX);
-    };
+    }, [currentX, isLoading, isError]);
 
-    const handleMouseMove = (e: React.MouseEvent) => {
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
         if (!isDragging) return;
-        e.preventDefault();
         const x = e.clientX - startX;
         setCurrentX(x);
-    };
+    }, [isDragging, startX]);
 
-    const handleTouchMove = (e: React.TouchEvent) => {
+    const handleTouchMove = useCallback((e: React.TouchEvent) => {
         if (!isDragging) return;
-        // Prevent default to stop scrolling the page while panning the image
-        // e.preventDefault(); // Note: might need passive implementation for touch
         const x = e.touches[0].clientX - startX;
         setCurrentX(x);
-    };
+    }, [isDragging, startX]);
 
-    const handleMouseUp = () => {
+    const handleMouseUp = useCallback(() => {
         setIsDragging(false);
-    };
+    }, []);
 
-    // Handle zoom
-    const handleZoomIn = () => {
-        setZoomLevel(prev => Math.min(prev + 20, 300)); // Max 300%
-    };
+    const handleZoomIn = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setZoomLevel(prev => Math.min(prev + 20, 300));
+    }, []);
 
-    const handleZoomOut = () => {
-        setZoomLevel(prev => Math.max(prev - 20, 100)); // Min 100%
-    };
+    const handleZoomOut = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setZoomLevel(prev => Math.max(prev - 20, 100));
+    }, []);
 
-    // Reset when image changes
     useEffect(() => {
         setCurrentX(0);
         setZoomLevel(initialZoom);
     }, [imageSrc, initialZoom]);
 
-    // Clean up global events
     useEffect(() => {
         const handleGlobalMouseUp = () => setIsDragging(false);
         window.addEventListener('mouseup', handleGlobalMouseUp);
@@ -72,56 +92,80 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
     return (
         <div
             ref={containerRef}
-            className={`relative overflow-hidden rounded-xl border-2 border-border/50 bg-black/5 select-none touch-none group ${className}`}
+            className={`relative overflow-hidden bg-muted/20 select-none touch-none group ${className}`}
             style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleMouseUp}
+            onMouseLeave={handleMouseUp}
         >
+            {/* Loading Overlay */}
+            {isLoading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/10 backdrop-blur-sm z-10 transition-opacity">
+                    <Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Loading Panorama...</span>
+                </div>
+            )}
+
+            {/* Error Overlay */}
+            {isError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/5 text-destructive z-10 p-6 text-center">
+                    <p className="text-sm font-bold">Image failed to load</p>
+                    <p className="text-xs opacity-70">Check your network connection</p>
+                </div>
+            )}
+
             {/* The Panorama Image Layer */}
-            <div
-                className="w-full h-full absolute inset-0 transition-transform duration-75 ease-out"
-                style={{
-                    backgroundImage: `url(${imageSrc})`,
-                    backgroundPosition: `${currentX}px center`,
-                    backgroundSize: `auto ${zoomLevel}%`,
-                    backgroundRepeat: 'repeat-x', // Key for continuous "rotation"
-                }}
-                role="img"
-                aria-label="360 Panorama View"
-            />
+            {!isLoading && !isError && (
+                <div
+                    className="w-full h-full absolute inset-0 transition-opacity duration-500"
+                    style={{
+                        backgroundImage: `url("${imageSrc}")`,
+                        backgroundPosition: `${currentX}px center`,
+                        backgroundSize: `auto ${zoomLevel}%`,
+                        backgroundRepeat: 'repeat-x',
+                        opacity: isLoading ? 0 : 1
+                    }}
+                    role="img"
+                    aria-label="360 Panorama View"
+                />
+            )}
 
             {/* Controls Overlay */}
-            <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <Button
-                    variant="secondary"
-                    size="icon"
-                    className="bg-black/50 text-white hover:bg-black/70 w-8 h-8 rounded-full backdrop-blur-sm"
-                    onClick={(e) => { e.stopPropagation(); handleZoomOut(); }}
-                    disabled={zoomLevel <= 100}
-                >
-                    <ZoomOut size={16} />
-                </Button>
-                <Button
-                    variant="secondary"
-                    size="icon"
-                    className="bg-black/50 text-white hover:bg-black/70 w-8 h-8 rounded-full backdrop-blur-sm"
-                    onClick={(e) => { e.stopPropagation(); handleZoomIn(); }}
-                    disabled={zoomLevel >= 300}
-                >
-                    <ZoomIn size={16} />
-                </Button>
-            </div>
+            {!isLoading && !isError && (
+                <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        className="bg-black/60 text-white hover:bg-black/80 w-10 h-10 rounded-full backdrop-blur-md border-none shadow-xl"
+                        onClick={handleZoomOut}
+                        disabled={zoomLevel <= 100}
+                    >
+                        <ZoomOut size={20} />
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        className="bg-black/60 text-white hover:bg-black/80 w-10 h-10 rounded-full backdrop-blur-md border-none shadow-xl"
+                        onClick={handleZoomIn}
+                        disabled={zoomLevel >= 300}
+                    >
+                        <ZoomIn size={20} />
+                    </Button>
+                </div>
+            )}
 
             {/* Hint Overlay */}
-            <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-500 ${isDragging ? 'opacity-0' : 'opacity-100'}`}>
-                <div className="bg-black/30 backdrop-blur-[2px] text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 opacity-70">
-                    <Move size={14} />
-                    Drag to rotate
+            {!isLoading && !isError && !isDragging && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-700">
+                    <div className="bg-black/40 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold flex items-center gap-3 shadow-2xl animate-pulse">
+                        <Move size={16} />
+                        DRAG TO ROTATE
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

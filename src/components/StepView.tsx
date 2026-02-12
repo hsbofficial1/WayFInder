@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { ChevronLeft, ChevronRight, RotateCcw, CheckCircle2, HelpCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,13 +31,14 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const topRef = useRef<HTMLDivElement>(null);
 
-  // High-level defensive check
+  // Safeguard: Early exit if route is invalid
   if (!route || !route.steps || route.steps.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-dvh p-8 text-center gap-4">
-        <p className="text-muted-foreground font-medium">Something went wrong with this route.</p>
-        <Button onClick={onRestart}>Go Back</Button>
+      <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center bg-background">
+        <p className="text-muted-foreground mb-4">Route information missing or invalid.</p>
+        <Button onClick={onRestart} className="rounded-xl">Go Back</Button>
       </div>
     );
   }
@@ -46,60 +47,34 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   const total = route.steps.length;
   const isFirst = currentStep === 0;
   const isLast = currentStep === total - 1;
-  const fromLocation = locations?.find((l) => l.id === route.from);
-  const toLocation = locations?.find((l) => l.id === route.to);
-  const topRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to top when step changes
+  const fromLocation = useMemo(() => locations?.find((l) => l.id === route.from), [locations, route.from]);
+  const toLocation = useMemo(() => locations?.find((l) => l.id === route.to), [locations, route.to]);
+
+  // Scroll to top on step change - throttled
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    if (topRef.current) {
-      topRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 10);
+    return () => clearTimeout(timer);
   }, [currentStep]);
 
-  const vibrate = () => {
+  const handleNext = useCallback(() => {
+    // Simple vibration only, removed AudioContext to avoid potential browser crashes/leaks
     if (typeof navigator !== "undefined" && navigator.vibrate) {
       navigator.vibrate(50);
     }
-  };
-
-  const playSound = () => {
-    try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.1);
-
-      gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-
-      oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.1);
-    } catch (e) {
-      console.error("Audio feedback not supported", e);
-    }
-  };
-
-  const handleNext = () => {
-    vibrate();
-    playSound();
     setCurrentStep((s) => Math.min(s + 1, total - 1));
-  };
+  }, [total]);
 
-  const handlePrev = () => {
-    vibrate();
-    playSound();
+  const handlePrev = useCallback(() => {
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(50);
+    }
     setCurrentStep((s) => Math.max(s - 1, 0));
-  };
+  }, []);
 
-  const submitFeedback = () => {
+  const submitFeedback = useCallback(() => {
     addFeedback({
       rating,
       comment,
@@ -109,7 +84,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
     toast.success("Thank you for your feedback!");
     setShowFeedback(false);
     onRestart();
-  };
+  }, [addFeedback, rating, comment, route.from, route.to, onRestart]);
 
   const getName = (loc: any) => {
     if (!loc) return "";
@@ -119,7 +94,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   };
 
   const getInstruction = (s: any) => {
-    if (!s) return "Go to the next location";
+    if (!s) return "";
     if (language === 'ml') return s.instruction_ml || s.instruction;
     if (language === 'kn') return s.instruction_kn || s.instruction;
     return s.instruction;
@@ -128,7 +103,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   return (
     <div className="flex flex-col h-dvh overflow-hidden bg-background" ref={topRef}>
       {/* Header */}
-      <div className="px-5 pt-6 pb-2 bg-background/95 backdrop-blur-sm z-10 border-b border-border/50 shrink-0">
+      <div className="px-5 pt-6 pb-2 bg-background/95 backdrop-blur-sm z-20 border-b border-border/50 shrink-0">
         <div className="flex items-center justify-between mb-3">
           <button
             onClick={onRestart}
@@ -170,12 +145,12 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
       {/* Step content */}
       <div
         key={currentStep}
-        className="flex-1 flex flex-col items-center justify-center px-6 py-6 gap-6 animate-in fade-in slide-in-from-right-4 duration-500 overflow-hidden"
+        className="flex-1 flex flex-col items-center justify-center px-6 py-6 gap-6 animate-in fade-in slide-in-from-right-4 duration-500 overflow-y-auto"
       >
-        <div className="text-center space-y-6 w-full max-w-sm mx-auto flex flex-col items-center">
+        <div className="text-center space-y-6 w-full max-w-sm mx-auto flex flex-col items-center py-4">
           {/* Floor indicator */}
           {step?.floor !== null && step?.floor !== undefined && (
-            <div className="inline-block px-4 py-1.5 rounded-full bg-secondary text-secondary-foreground text-xs font-bold uppercase tracking-widest shadow-sm">
+            <div className="inline-block px-4 py-1.5 rounded-full bg-secondary text-secondary-foreground text-xs font-bold uppercase tracking-widest shadow-sm shrink-0">
               {getFloorLabel(step.floor)}
             </div>
           )}
@@ -189,17 +164,17 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
           </div>
 
           {/* Instruction */}
-          <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-foreground px-2">
+          <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-foreground px-2 shrink-0">
             {getInstruction(step)}
           </h2>
 
           {/* Landmark Panorama/Image */}
           {step?.landmarkImage && (
-            <div className="w-full flex-1 min-h-[180px] max-h-[300px] rounded-[2rem] overflow-hidden shadow-2xl border border-border/40 bg-muted/30 relative">
+            <div className="w-full min-h-[180px] max-h-[300px] aspect-[4/3] rounded-[2rem] overflow-hidden shadow-2xl border border-border/40 bg-muted/30 relative shrink-0">
               <PanoramaViewer
                 key={step.landmarkImage}
                 imageSrc={step.landmarkImage}
-                className="w-full h-full object-cover"
+                className="w-full h-full"
                 initialZoom={110}
               />
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-background/60 backdrop-blur-md text-[10px] text-center text-muted-foreground font-medium border-t border-border/40 uppercase tracking-wider">
@@ -212,8 +187,8 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
 
       {/* Navigation buttons */}
       <div
-        className="px-5 pb-8 pt-4 space-y-4 bg-background border-t border-border/50 shrink-0"
-        style={{ paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))" }}
+        className="px-5 pb-8 pt-4 space-y-4 bg-background border-t border-border/50 shrink-0 z-20"
+        style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))" }}
       >
         {isLast ? (
           <div className="space-y-4">
@@ -238,23 +213,24 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
           </div>
         ) : (
           <div className="flex gap-4">
-            <Button
+            <button
               onClick={handlePrev}
               disabled={isFirst}
-              variant="outline"
-              className="h-16 px-6 text-lg rounded-2xl border-2 hover:bg-secondary/50 shadow-sm"
+              className={`h-16 px-6 rounded-2xl border-2 transition-all flex items-center justify-center ${isFirst ? 'opacity-30 cursor-not-allowed grayscale' : 'hover:bg-secondary/50 active:scale-95 border-border shadow-sm'}`}
               aria-label="Previous step"
             >
               <ChevronLeft size={28} />
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={handleNext}
-              className="flex-1 h-16 text-lg rounded-2xl font-bold gap-2 shadow-lg shadow-primary/20 active:scale-[1.02] transition-all"
+              className="flex-1 h-16 text-lg rounded-2xl font-bold gap-2 shadow-lg shadow-primary/20 bg-primary text-primary-foreground flex items-center justify-center active:scale-[0.98] transition-all"
               aria-label="Next step"
             >
-              {t('next_step')}
-              <ChevronRight size={28} />
-            </Button>
+              <span className="flex items-center gap-2">
+                {t('next_step')}
+                <ChevronRight size={28} />
+              </span>
+            </button>
           </div>
         )}
 
@@ -278,6 +254,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
           </div>
         )}
       </div>
+
       {/* Feedback Dialog */}
       <Dialog open={showFeedback} onOpenChange={setShowFeedback}>
         <DialogContent className="sm:max-w-md rounded-3xl">
