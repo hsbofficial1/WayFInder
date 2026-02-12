@@ -19,6 +19,7 @@ import {
     DialogTitle,
     DialogTrigger,
     DialogFooter,
+    DialogDescription,
 } from "@/components/ui/dialog";
 import {
     Select,
@@ -719,6 +720,9 @@ export default function Admin() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>{editingFloor ? "Edit Building Level" : "Construct New Floor"}</DialogTitle>
+                            <DialogDescription>
+                                Add or modify a floor level in the building.
+                            </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-6 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
@@ -742,6 +746,9 @@ export default function Admin() {
                     <DialogContent className="sm:max-w-[500px]">
                         <DialogHeader>
                             <DialogTitle>{editingLoc ? `Relocate: ${editingLoc.name}` : "Architect New Location"}</DialogTitle>
+                            <DialogDescription>
+                                Define the details and coordinates for this location.
+                            </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-6 py-4">
                             <div className="grid gap-2">
@@ -851,6 +858,9 @@ export default function Admin() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>{editingEdge ? "Edit Connection" : "Add Graph Link"}</DialogTitle>
+                            <DialogDescription>
+                                Create a path between two locations for the navigation graph.
+                            </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-6 py-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -914,7 +924,7 @@ export default function Admin() {
                                 <RouteIcon className="h-6 w-6 text-primary" />
                                 {editingRoute ? "Edit Optimized Route" : "Design New Navigation Chain"}
                             </DialogTitle>
-                            <CardDescription className="text-left">Chain multiple steps to guide users from A to B with visual cues.</CardDescription>
+                            <DialogDescription className="text-left">Chain multiple steps to guide users from A to B with visual cues.</DialogDescription>
                         </DialogHeader>
 
                         <div className="flex-1 overflow-hidden flex flex-col px-6">

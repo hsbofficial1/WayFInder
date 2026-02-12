@@ -11,7 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import LocationSelector from "@/components/LocationSelector";
 import StepView from "@/components/StepView";
-import { useFindRoute, useLocations, type RouteWithSteps } from "@/hooks/useNavigation";
+import { useLocations, type RouteWithSteps } from "@/hooks/useNavigation";
+import { findGraphRoute } from "@/data/graphData";
+import { RouteStep } from "@/data/routes";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/context/LanguageContext";
 import { useNavigationContext } from "@/context/NavigationContext";
@@ -24,55 +26,64 @@ const Index = () => {
   const [activeRoute, setActiveRoute] = useState<RouteWithSteps | null>(null);
   const [error, setError] = useState("");
 
-  const { recordNavigation, floors } = useNavigationContext();
+  const { edges, floors } = useNavigationContext();
   const { data: allLocations } = useLocations();
 
-  const filteredLocations = useMemo(() => {
-    return allLocations?.filter(l => {
-      if (l.isUnavailable) return false;
-      const floor = floors.find(f => f.number === l.floor);
-      return !floor?.isUnavailable;
-    }) || [];
-  }, [allLocations, floors]);
+  /* REMOVED: useFindRoute hook usage to fix "Start Navigation" button issues */
 
-  const { data: foundRoute, isLoading: isSearching } = useFindRoute(
-    from,
-    to,
-    searchTriggered && !!from && !!to && from !== to
-  );
-
-  // Transition to navigation view when route is found
-  useEffect(() => {
-    if (searchTriggered && !isSearching) {
-      if (foundRoute) {
-        // Atomic update to transition view
-        setActiveRoute(foundRoute);
-        setSearchTriggered(false);
-        // Defer statistics recording slightly to allow render to settle
-        const timer = setTimeout(() => {
-          recordNavigation(true, to);
-        }, 300);
-        return () => clearTimeout(timer);
-      } else if (foundRoute === null) {
-        setError("Sorry, no route found between these locations. Try different points.");
-        setSearchTriggered(false);
-        recordNavigation(false);
-      }
-    }
-  }, [searchTriggered, isSearching, foundRoute, to, recordNavigation]);
-
-  const handleShowRoute = useCallback(() => {
+  /* Direct Imperative Route Finding - Fixes Lag & State Issues */
+  const handleShowRoute = () => {
     setError("");
     if (!from || !to) {
-      setError("Please select both a starting point and destination.");
+      setError(t('select_start_dest_error') || "Please select both a starting point and destination.");
       return;
     }
     if (from === to) {
-      setError("You're already there! Pick a different destination.");
+      setError(t('same_location_error') || "You're already there! Pick a different destination.");
       return;
     }
-    setSearchTriggered(true);
-  }, [from, to]);
+
+    try {
+      console.log("Starting route calculation...", { from, to });
+      // Calculate route immediately
+      const graphResult = findGraphRoute(from, to, allLocations, edges);
+      console.log("Graph result:", graphResult);
+
+      if (graphResult) {
+        const steps: RouteStep[] = graphResult.steps.map((step: any) => ({
+          instruction: step.instruction,
+          instruction_ml: step.instruction_ml,
+          instruction_kn: step.instruction_kn,
+          icon: step.icon_type as any,
+          floor: step.floor ?? 0,
+          landmarkImage: step.landmarkImage,
+        }));
+
+        const route: RouteWithSteps = {
+          id: "generated-route",
+          from,
+          to,
+          steps,
+          duration: graphResult.totalWeight
+        };
+
+        console.log("Setting active route:", route);
+        setActiveRoute(route);
+
+        // Background stat recording
+        // setTimeout(() => recordNavigation(true, to), 100);
+      } else {
+        setError(t('no_route_error') || "No route found between these locations.");
+        recordNavigation(false);
+      }
+
+    } catch (err) {
+      console.error("Route calculation error:", err);
+      setError("An error occurred while calculating the route.");
+    }
+  };
+
+
 
   const handleRestart = useCallback(() => {
     setActiveRoute(null);
@@ -156,28 +167,15 @@ const Index = () => {
 
           <Button
             onClick={handleShowRoute}
-            disabled={!from || !to || isSearching}
+            disabled={!from || !to}
             className="w-full h-16 text-lg font-bold rounded-2xl gap-3 shadow-xl transition-all active:scale-[0.98]"
             size="lg"
           >
-            {isSearching ? (
-              <Loader2 size={24} className="animate-spin" />
-            ) : (
-              <Navigation size={24} className="fill-current" />
-            )}
-            {isSearching ? "Finding Route..." : t('start_navigation')}
+            <Navigation size={24} className="fill-current" />
+            {t('start_navigation')}
           </Button>
 
-          {foundRoute?.duration !== undefined && !isSearching && !error && (
-            <div className="flex items-center justify-center gap-2 py-3 bg-primary/5 rounded-xl border border-primary/10 animate-in fade-in slide-in-from-top-2">
-              <Clock size={16} className="text-primary" />
-              <span className="text-sm font-semibold text-primary">
-                Estimated Time: {foundRoute.duration >= 60
-                  ? `${Math.floor(foundRoute.duration / 60)}m ${foundRoute.duration % 60}s`
-                  : `${foundRoute.duration}s`}
-              </span>
-            </div>
-          )}
+
         </div>
 
         {/* Info section */}

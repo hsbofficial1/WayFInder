@@ -201,6 +201,12 @@ export const findGraphRoute = (
         const p2 = activeCoords[curr];
         const p3 = activeCoords[next];
 
+        // Safety check for missing coordinates
+        if (!p2 || !p3) {
+            console.warn(`Missing coordinates for nodes: ${curr} or ${next}`);
+            continue;
+        }
+
         const currLandmark = activeLandmarks[curr] || { label: curr, cue: "the area", image: undefined };
         const nextLandmark = activeLandmarks[next] || { label: next, cue: "the area", image: undefined };
 

@@ -169,7 +169,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
           </h2>
 
           {/* Landmark Panorama/Image */}
-          {step?.landmarkImage && (
+          {/* {step?.landmarkImage && (
             <div className="w-full min-h-[180px] max-h-[300px] aspect-[4/3] rounded-[2rem] overflow-hidden shadow-2xl border border-border/40 bg-muted/30 relative shrink-0">
               <PanoramaViewer
                 key={step.landmarkImage}
@@ -181,7 +181,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
                 Move device or drag to explore
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
 

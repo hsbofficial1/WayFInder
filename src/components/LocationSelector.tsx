@@ -10,6 +10,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
   DrawerClose,
+  DrawerDescription,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -144,12 +145,16 @@ const LocationSelector = ({
         <DrawerContent className="h-[85vh] max-h-[85vh] flex flex-col rounded-t-3xl">
           <DrawerHeader className="px-6 pt-6 pb-2 shrink-0 text-left">
             <DrawerTitle className="text-2xl font-bold">{placeholder}</DrawerTitle>
+            <DrawerDescription>
+              Search and select a location from the list below.
+            </DrawerDescription>
           </DrawerHeader>
 
           <div className="px-6 py-2 shrink-0">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
               <Input
+                autoFocus
                 placeholder={t('search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
