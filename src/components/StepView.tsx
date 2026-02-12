@@ -162,7 +162,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
       >
         <div className="text-center space-y-6 w-full max-w-sm mx-auto flex flex-col items-center">
           {/* Floor indicator */}
-          {step.floor !== null && step.floor !== undefined && (
+          {step?.floor !== null && step?.floor !== undefined && (
             <div className="inline-block px-4 py-1.5 rounded-full bg-secondary text-secondary-foreground text-xs font-bold uppercase tracking-widest shadow-sm">
               {getFloorLabel(step.floor)}
             </div>
@@ -172,7 +172,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
           <div className="relative group shrink-0">
             <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 group-hover:bg-primary/30 transition-colors" />
             <div className="relative bg-card p-6 rounded-[2.5rem] shadow-xl shadow-primary/5 border border-border/50">
-              <DirectionIcon type={step.icon as IconType} size={72} />
+              <DirectionIcon type={(step?.icon || "straight") as IconType} size={72} />
             </div>
           </div>
 
@@ -182,7 +182,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
           </h2>
 
           {/* Landmark Panorama/Image */}
-          {step.landmarkImage && (
+          {step?.landmarkImage && (
             <div className="w-full flex-1 min-h-[180px] max-h-[300px] rounded-[2rem] overflow-hidden shadow-2xl border border-border/40 bg-muted/30 relative">
               <PanoramaViewer
                 key={step.landmarkImage}

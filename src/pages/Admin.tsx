@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigationContext } from "@/context/NavigationContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,7 @@ import { RouteStep, IconType } from "@/data/routes";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import PanoramaViewer from "@/components/PanoramaViewer";
 
 import { findGraphRoute } from "@/data/graphData";
 
@@ -71,13 +72,13 @@ export default function Admin() {
         setFloorMap, resetToDefaults
     } = useNavigationContext();
 
-    const [activeTab, setActiveTab] = React.useState("overview");
+    const [activeTab, setActiveTab] = useState("overview");
 
     // --- FLOOR MANAGEMENT ---
-    const [isFloorDialogOpen, setIsFloorDialogOpen] = React.useState(false);
-    const [editingFloor, setEditingFloor] = React.useState<any>(null);
-    const [floorLabel, setFloorLabel] = React.useState("");
-    const [floorNumber, setFloorNumber] = React.useState("0");
+    const [isFloorDialogOpen, setIsFloorDialogOpen] = useState(false);
+    const [editingFloor, setEditingFloor] = useState<any>(null);
+    const [floorLabel, setFloorLabel] = useState("");
+    const [floorNumber, setFloorNumber] = useState("0");
 
     const handleSaveFloor = () => {
         if (!floorLabel) return;
@@ -86,7 +87,7 @@ export default function Admin() {
             number: parseInt(floorNumber),
             label: floorLabel,
             isUnavailable: editingFloor?.isUnavailable || false
-        };
+        } as any;
 
         if (editingFloor) {
             updateFloor(editingFloor.id, floorData);
@@ -101,15 +102,16 @@ export default function Admin() {
     };
 
     // --- LOCATION MANAGEMENT ---
-    const [isLocDialogOpen, setIsLocDialogOpen] = React.useState(false);
-    const [editingLoc, setEditingLoc] = React.useState<any>(null);
-    const [locName, setLocName] = React.useState("");
-    const [locFloor, setLocFloor] = React.useState("0");
-    const [locType, setLocType] = React.useState<LocationType>("room");
-    const [locX, setLocX] = React.useState("");
-    const [locY, setLocY] = React.useState("");
-    const [locCue, setLocCue] = React.useState("");
-    const [isPickingPoint, setIsPickingPoint] = React.useState(false);
+    const [isLocDialogOpen, setIsLocDialogOpen] = useState(false);
+    const [editingLoc, setEditingLoc] = useState<any>(null);
+    const [locName, setLocName] = useState("");
+    const [locFloor, setLocFloor] = useState("0");
+    const [locType, setLocType] = useState<LocationType>("room");
+    const [locX, setLocX] = useState("");
+    const [locY, setLocY] = useState("");
+    const [locCue, setLocCue] = useState("");
+    const [locImage, setLocImage] = useState("");
+    const [isPickingPoint, setIsPickingPoint] = useState(false);
 
     const handleSaveLocation = () => {
         if (!locName) return;
@@ -122,8 +124,9 @@ export default function Admin() {
             isUnavailable: editingLoc?.isUnavailable || false,
             x: locX ? parseFloat(locX) : undefined,
             y: locY ? parseFloat(locY) : undefined,
-            cue: locCue
-        };
+            cue: locCue,
+            image: locImage
+        } as any;
 
         if (editingLoc) {
             updateLocation(editingLoc.id, locData);
@@ -138,15 +141,16 @@ export default function Admin() {
         setLocX("");
         setLocY("");
         setLocCue("");
+        setLocImage("");
     };
 
     // --- ROUTE MANAGEMENT ---
-    const [isRouteDialogOpen, setIsRouteDialogOpen] = React.useState(false);
-    const [editingRoute, setEditingRoute] = React.useState<any>(null);
-    const [routeFrom, setRouteFrom] = React.useState("");
-    const [routeTo, setRouteTo] = React.useState("");
-    const [routeSteps, setRouteSteps] = React.useState<RouteStep[]>([]);
-    const [routeEnabled, setRouteEnabled] = React.useState(true);
+    const [isRouteDialogOpen, setIsRouteDialogOpen] = useState(false);
+    const [editingRoute, setEditingRoute] = useState<any>(null);
+    const [routeFrom, setRouteFrom] = useState("");
+    const [routeTo, setRouteTo] = useState("");
+    const [routeSteps, setRouteSteps] = useState<RouteStep[]>([]);
+    const [routeEnabled, setRouteEnabled] = useState(true);
 
     const handleSaveRoute = () => {
         if (!routeFrom || !routeTo || routeSteps.length === 0) {
@@ -271,13 +275,13 @@ export default function Admin() {
     };
 
     // --- EDGE MANAGEMENT ---
-    const [isEdgeDialogOpen, setIsEdgeDialogOpen] = React.useState(false);
-    const [editingEdge, setEditingEdge] = React.useState<any>(null);
-    const [edgeFrom, setEdgeFrom] = React.useState("");
-    const [edgeTo, setEdgeTo] = React.useState("");
-    const [edgeWeight, setEdgeWeight] = React.useState("10");
-    const [edgeType, setEdgeType] = React.useState<any>("walk");
-    const [edgeBidirectional, setEdgeBidirectional] = React.useState(true);
+    const [isEdgeDialogOpen, setIsEdgeDialogOpen] = useState(false);
+    const [editingEdge, setEditingEdge] = useState<any>(null);
+    const [edgeFrom, setEdgeFrom] = useState("");
+    const [edgeTo, setEdgeTo] = useState("");
+    const [edgeWeight, setEdgeWeight] = useState("10");
+    const [edgeType, setEdgeType] = useState<any>("walk");
+    const [edgeBidirectional, setEdgeBidirectional] = useState(true);
 
     const handleSaveEdge = () => {
         if (!edgeFrom || !edgeTo) return;
@@ -302,133 +306,108 @@ export default function Admin() {
         setEdgeTo("");
     };
 
-    // --- MAP UPLOAD ---
-    const handleMapUpload = (floorNum: number, e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setFloorMap(floorNum, reader.result as string);
-                toast.success(`Map for Floor ${floorNum} updated`);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    // --- STATS COMPUTATION ---
-    const topDestinations = React.useMemo(() => {
+    const topDestinations = useMemo(() => {
         return Object.entries(stats.popularDestinations)
             .sort(([, a], [, b]) => b - a)
             .slice(0, 5);
     }, [stats.popularDestinations]);
 
     return (
-        <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950">
-            <div className="container mx-auto py-10 px-4">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-4 md:p-8">
+            <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
                     <div>
-                        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-3">
-                            <Layers className="h-10 w-10 text-primary" />
-                            WayFinder Admin
+                        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-3">
+                            <Layers className="text-primary h-8 w-8" />
+                            WayFinder <span className="text-primary/60 font-medium">| Control Center</span>
                         </h1>
-                        <p className="text-slate-500 mt-1">Management portal for indoor wayfinding and analytics.</p>
+                        <p className="text-slate-500 mt-1">Manage indoor intelligence, navigation paths, and user feedback</p>
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => window.open('/', '_blank')}>
-                            <Eye className="mr-2 h-4 w-4" /> Live Preview
+                    <div className="flex items-center gap-3">
+                        <Button variant="outline" onClick={() => window.location.href = "/"} className="rounded-xl">
+                            <Eye className="mr-2 h-4 w-4" /> Live Site
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={() => {
-                            if (confirm("DANGER: This will delete ALL custom data. Continue?")) {
-                                resetToDefaults();
-                                toast.success("System reset to defaults");
-                            }
-                        }}>
-                            <RotateCcw className="mr-2 h-4 w-4" /> Hard Reset
+                        <Button variant="destructive" onClick={resetToDefaults} className="rounded-xl shadow-lg shadow-destructive/10">
+                            <RotateCcw className="mr-2 h-4 w-4" /> Factory Reset
                         </Button>
                     </div>
-                </div>
+                </header>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                    <TabsList className="bg-white dark:bg-slate-900 border shadow-sm p-1 rounded-xl w-full md:w-auto h-auto grid grid-cols-2 md:inline-flex">
-                        <TabsTrigger value="overview" className="gap-2 px-4 py-2"><BarChart3 className="h-4 w-4" /> Overview</TabsTrigger>
-                        <TabsTrigger value="floors" className="gap-2 px-4 py-2"><Layers className="h-4 w-4" /> Floors</TabsTrigger>
-                        <TabsTrigger value="locations" className="gap-2 px-4 py-2"><MapPin className="h-4 w-4" /> Locations</TabsTrigger>
-                        <TabsTrigger value="edges" className="gap-2 px-4 py-2"><MapIcon className="h-4 w-4" /> Connections</TabsTrigger>
-                        <TabsTrigger value="routes" className="gap-2 px-4 py-2"><RouteIcon className="h-4 w-4" /> Routes</TabsTrigger>
-                        <TabsTrigger value="feedback" className="gap-2 px-4 py-2"><MessageSquare className="h-4 w-4" /> Feedback</TabsTrigger>
+                    <TabsList className="bg-white dark:bg-slate-900 border p-1 rounded-xl shadow-sm overflow-x-auto flex-nowrap w-full justify-start h-auto">
+                        <TabsTrigger value="overview" className="rounded-lg py-2.5 px-6"><BarChart3 className="h-4 w-4 mr-2" /> Overview</TabsTrigger>
+                        <TabsTrigger value="floors" className="rounded-lg py-2.5 px-6"><MapIcon className="h-4 w-4 mr-2" /> Floors</TabsTrigger>
+                        <TabsTrigger value="locations" className="rounded-lg py-2.5 px-6"><MapPin className="h-4 w-4 mr-2" /> Locations</TabsTrigger>
+                        <TabsTrigger value="edges" className="rounded-lg py-2.5 px-6"><Plus className="h-4 w-4 mr-2" /> Connections</TabsTrigger>
+                        <TabsTrigger value="routes" className="rounded-lg py-2.5 px-6"><RouteIcon className="h-4 w-4 mr-2" /> Routes</TabsTrigger>
+                        <TabsTrigger value="feedback" className="rounded-lg py-2.5 px-6"><MessageSquare className="h-4 w-4 mr-2" /> Feedback</TabsTrigger>
                     </TabsList>
 
-                    {/* --- OVERVIEW TAB --- */}
-                    <TabsContent value="overview" className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <StatsCard title="Total Navigations" value={stats.totalNavigations} icon={<RouteIcon />} description="All time across all users" />
-                            <StatsCard title="Success Rate" value={`${stats.totalNavigations ? Math.round((stats.routesFound / stats.totalNavigations) * 100) : 0}%`} icon={<CheckCircle2 className="text-emerald-500" />} color="emerald" />
-                            <StatsCard title="Failed Routes" value={stats.routesNotFound} icon={<AlertTriangle className="text-amber-500" />} color="amber" />
-                            <StatsCard title="Feedback" value={feedback.length} icon={<MessageSquare className="text-blue-500" />} color="blue" />
+                    <TabsContent value="overview" className="space-y-6 animate-in fade-in duration-500">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <StatsCard title="Total Navigations" value={stats.totalNavigations} icon={<NavigationIcon className="h-5 w-5" />} color="blue" description="All time unique sessions" />
+                            <StatsCard title="Pathfinding Success" value={`${Math.round((stats.routesFound / (stats.totalNavigations || 1)) * 100)}%`} icon={<CheckCircle2 className="h-5 w-5" />} color="emerald" description={`${stats.routesFound} routes calculated`} />
+                            <StatsCard title="Total Locations" value={locations.length} icon={<MapPin className="h-5 w-5" />} color="primary" description="POIs in the building" />
+                            <StatsCard title="Support Rating" value="4.8/5" icon={<MessageSquare className="h-5 w-5" />} color="amber" description="From user feedback" />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Card className="shadow-lg border-primary/10">
-                                <CardHeader>
-                                    <CardTitle>Popular Destinations</CardTitle>
-                                    <CardDescription>Most searched locations by users</CardDescription>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <Card className="shadow-sm">
+                                <CardHeader className="border-b bg-slate-50/50">
+                                    <CardTitle className="text-lg">Popular Destinations</CardTitle>
+                                    <CardDescription>Most searched points of interest</CardDescription>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="pt-6">
                                     <div className="space-y-4">
                                         {topDestinations.length > 0 ? topDestinations.map(([id, count]) => {
                                             const loc = locations.find(l => l.id === id);
                                             return (
-                                                <div key={id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border">
+                                                <div key={id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
                                                     <div className="flex items-center gap-3">
-                                                        <Badge variant="secondary" className="h-6 w-6 rounded-full p-0 flex items-center justify-center">{count}</Badge>
-                                                        <span className="font-medium">{loc?.name || id}</span>
+                                                        <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                                                            {loc?.name?.charAt(0) || '?'}
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="font-medium">{loc?.name || id}</span>
+                                                            <span className="text-xs text-slate-500 capitalize">{loc?.type || 'POI'}</span>
+                                                        </div>
                                                     </div>
-                                                    <Badge>{loc?.type || 'unknown'}</Badge>
+                                                    <Badge variant="secondary" className="px-3 py-1">{count} hits</Badge>
                                                 </div>
                                             );
-                                        }) : <p className="text-center py-8 text-slate-400 italic">No usage data yet</p>}
+                                        }) : (
+                                            <div className="text-center py-12 text-slate-400">
+                                                <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                                                <p>No navigation data yet</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="shadow-lg border-primary/10">
-                                <CardHeader>
-                                    <CardTitle>Recent Feedback</CardTitle>
-                                    <CardDescription>Latest comments from users</CardDescription>
+                            <Card className="shadow-sm">
+                                <CardHeader className="border-b bg-slate-50/50">
+                                    <CardTitle className="text-lg">Quick Actions</CardTitle>
+                                    <CardDescription>Common administrative tasks</CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {feedback.slice(0, 3).map(fb => (
-                                            <div key={fb.id} className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900 border space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <div className="flex gap-1">
-                                                        {[1, 2, 3, 4, 5].map(i => (
-                                                            <span key={i} className={i <= fb.rating ? "text-amber-400" : "text-slate-300"}>★</span>
-                                                        ))}
-                                                    </div>
-                                                    <span className="text-xs text-slate-400">{new Date(fb.timestamp).toLocaleDateString()}</span>
-                                                </div>
-                                                <p className="text-sm italic text-slate-600 dark:text-slate-400 line-clamp-2">"{fb.comment}"</p>
-                                            </div>
-                                        ))}
-                                        {feedback.length === 0 && <p className="text-center py-8 text-slate-400 italic">No feedback received</p>}
-                                        {feedback.length > 0 && (
-                                            <Button variant="link" className="w-full text-primary" onClick={() => setActiveTab('feedback')}>View all feedback</Button>
-                                        )}
+                                <CardContent className="pt-8">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <ActionBtn icon={<Plus className="h-5 w-5" />} label="New Location" onClick={() => { setEditingLoc(null); setLocName(""); setIsLocDialogOpen(true); }} />
+                                        <ActionBtn icon={<RouteIcon className="h-5 w-5" />} label="Design Route" onClick={() => { setEditingRoute(null); setRouteFrom(""); setRouteTo(""); setRouteSteps([]); setIsRouteDialogOpen(true); }} />
+                                        <ActionBtn icon={<RotateCcw className="h-5 w-5" />} label="Bulk Generate" onClick={handleBulkGenerate} />
+                                        <ActionBtn icon={<MessageSquare className="h-5 w-5" />} label="View Feedback" onClick={() => setActiveTab("feedback")} />
                                     </div>
                                 </CardContent>
                             </Card>
                         </div>
                     </TabsContent>
 
-                    {/* --- FLOORS TAB --- */}
                     <TabsContent value="floors">
-                        <Card className="shadow-xl border-slate-200 dark:border-slate-800">
+                        <Card className="shadow-sm">
                             <CardHeader className="flex flex-row items-center justify-between border-b pb-6">
                                 <div>
                                     <CardTitle>Floor Management</CardTitle>
-                                    <CardDescription>Manage building levels and upload map plans</CardDescription>
+                                    <CardDescription>Configure physical building levels</CardDescription>
                                 </div>
                                 <Button onClick={() => { setEditingFloor(null); setFloorLabel(""); setFloorNumber("0"); setIsFloorDialogOpen(true); }}>
                                     <Plus className="mr-2 h-4 w-4" /> Add Floor
@@ -437,48 +416,55 @@ export default function Admin() {
                             <CardContent className="pt-6">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="bg-slate-50 dark:bg-slate-900/50">
-                                            <TableHead className="w-[100px]">Level</TableHead>
-                                            <TableHead>Label</TableHead>
-                                            <TableHead>Map Status</TableHead>
-                                            <TableHead>Availability</TableHead>
+                                        <TableRow className="bg-slate-50/50">
+                                            <TableHead>Number</TableHead>
+                                            <TableHead>Display Label</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Map Image</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {floors.sort((a, b) => a.number - b.number).map((f) => (
-                                            <TableRow key={f.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20">
-                                                <TableCell className="font-bold text-lg">{f.number}</TableCell>
-                                                <TableCell className="font-medium">{f.label}</TableCell>
+                                        {floors.map(floor => (
+                                            <TableRow key={floor.id}>
+                                                <TableCell className="font-bold">{floor.number}</TableCell>
+                                                <TableCell className="font-medium">{floor.label}</TableCell>
                                                 <TableCell>
-                                                    {floorMaps[f.number] ? (
-                                                        <Badge variant="success" className="bg-emerald-100 text-emerald-800 border-emerald-200">
-                                                            <ImageIcon className="h-3 w-3 mr-1" /> Map Uploaded
-                                                        </Badge>
+                                                    <Badge variant={floor.isUnavailable ? "destructive" : "outline"} className="rounded-full">
+                                                        {floor.isUnavailable ? "Closed" : "Active"}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {floorMaps[floor.number] ? (
+                                                        <div className="flex items-center gap-2 text-primary font-medium">
+                                                            <ImageIcon className="h-4 w-4" /> Uploaded
+                                                        </div>
                                                     ) : (
-                                                        <Badge variant="outline" className="text-slate-400 italic font-normal">No Map</Badge>
+                                                        <span className="text-slate-400">None</span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <Switch checked={!f.isUnavailable} onCheckedChange={(val) => updateFloor(f.id, { isUnavailable: !val })} />
-                                                        <span className="text-sm text-slate-500">{f.isUnavailable ? "Locked" : "Open"}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-right space-x-2">
+                                                <TableCell className="text-right">
                                                     <div className="flex justify-end gap-2">
-                                                        <Label htmlFor={`upload-${f.number}`} className="cursor-pointer">
-                                                            <div className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 border border-slate-200 hover:bg-slate-100 transition-colors">
-                                                                <Upload className="h-4 w-4" />
-                                                            </div>
-                                                            <Input id={`upload-${f.number}`} type="file" className="hidden" accept="image/*" onChange={(e) => handleMapUpload(f.number, e)} />
-                                                        </Label>
-                                                        <Button variant="ghost" size="icon" onClick={() => { setEditingFloor(f); setFloorLabel(f.label); setFloorNumber(f.number.toString()); setIsFloorDialogOpen(true); }}>
-                                                            <Save className="h-4 w-4 text-primary" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" onClick={() => deleteFloor(f.id)}>
-                                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                                        </Button>
+                                                        <label className="cursor-pointer">
+                                                            <Input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    const reader = new FileReader();
+                                                                    reader.onloadend = () => setFloorMap(floor.number, reader.result as string);
+                                                                    reader.readAsDataURL(file);
+                                                                }
+                                                            }} />
+                                                            <Button variant="ghost" size="icon" asChild>
+                                                                <span><Upload className="h-4 w-4" /></span>
+                                                            </Button>
+                                                        </label>
+                                                        <Button variant="ghost" size="icon" onClick={() => {
+                                                            setEditingFloor(floor);
+                                                            setFloorLabel(floor.label);
+                                                            setFloorNumber(floor.number.toString());
+                                                            setIsFloorDialogOpen(true);
+                                                        }}><Save className="h-4 w-4 text-primary" /></Button>
+                                                        <Button variant="ghost" size="icon" onClick={() => deleteFloor(floor.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -489,51 +475,52 @@ export default function Admin() {
                         </Card>
                     </TabsContent>
 
-                    {/* --- LOCATIONS TAB --- */}
                     <TabsContent value="locations">
-                        <Card className="shadow-xl border-slate-200 dark:border-slate-800">
+                        <Card className="shadow-sm">
                             <CardHeader className="flex flex-row items-center justify-between border-b pb-6">
                                 <div>
-                                    <CardTitle>Points of Interest</CardTitle>
-                                    <CardDescription>Manage rooms, facilities, and hotspots</CardDescription>
+                                    <CardTitle>Physical Locations</CardTitle>
+                                    <CardDescription>Points of interest and rooms in the building</CardDescription>
                                 </div>
-                                <Button onClick={() => {
-                                    setEditingLoc(null);
-                                    setLocName("");
-                                    setLocX("");
-                                    setLocY("");
-                                    setLocCue("");
-                                    setIsLocDialogOpen(true);
-                                }}>
+                                <Button onClick={() => { setEditingLoc(null); setLocName(""); setIsLocDialogOpen(true); }}>
                                     <Plus className="mr-2 h-4 w-4" /> Add Location
                                 </Button>
                             </CardHeader>
                             <CardContent className="pt-6">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="bg-slate-50 dark:bg-slate-900/50">
-                                            <TableHead>Identifier</TableHead>
-                                            <TableHead>Display Name</TableHead>
+                                        <TableRow className="bg-slate-50/50">
+                                            <TableHead>Name</TableHead>
                                             <TableHead>Floor</TableHead>
                                             <TableHead>Type</TableHead>
-                                            <TableHead>Availability</TableHead>
+                                            <TableHead>Coordinates</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {locations.map((loc) => (
-                                            <TableRow key={loc.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20">
-                                                <TableCell className="font-mono text-xs text-slate-400">{loc.id}</TableCell>
-                                                <TableCell className="font-semibold">{loc.name}</TableCell>
-                                                <TableCell><Badge variant="outline">Lvl {loc.floor}</Badge></TableCell>
+                                        {locations.map(loc => (
+                                            <TableRow key={loc.id}>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex flex-col">
+                                                        <span>{loc.name}</span>
+                                                        <span className="text-[10px] text-slate-400 font-mono uppercase">{loc.id}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>{floors.find(f => f.number === loc.floor)?.label || `Lvl ${loc.floor}`}</TableCell>
+                                                <TableCell><Badge variant="secondary" className="capitalize">{loc.type}</Badge></TableCell>
                                                 <TableCell>
-                                                    <Badge variant="secondary" className="capitalize">{loc.type}</Badge>
+                                                    {loc.image ? (
+                                                        <Badge variant="outline" className="text-emerald-600 bg-emerald-50 border-emerald-100 gap-1">
+                                                            <ImageIcon size={10} /> 360
+                                                        </Badge>
+                                                    ) : (
+                                                        <span className="text-slate-300">-</span>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <Switch checked={!loc.isUnavailable} onCheckedChange={(val) => updateLocation(loc.id, { isUnavailable: !val })} />
-                                                        <span className="text-sm font-medium">{loc.isUnavailable ? "Maintenance" : "Active"}</span>
-                                                    </div>
+                                                    {loc.x !== undefined ? (
+                                                        <code className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">{loc.x}%, {loc.y}%</code>
+                                                    ) : <span className="text-slate-400 text-xs italic">Not pinned</span>}
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <Button variant="ghost" size="icon" onClick={() => {
@@ -544,13 +531,10 @@ export default function Admin() {
                                                         setLocX(loc.x?.toString() || "");
                                                         setLocY(loc.y?.toString() || "");
                                                         setLocCue(loc.cue || "");
+                                                        setLocImage(loc.image || "");
                                                         setIsLocDialogOpen(true);
-                                                    }}>
-                                                        <Save className="h-4 w-4 text-primary" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => deleteLocation(loc.id)}>
-                                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                                    </Button>
+                                                    }}><Save className="h-4 w-4 text-primary" /></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => deleteLocation(loc.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -560,7 +544,6 @@ export default function Admin() {
                         </Card>
                     </TabsContent>
 
-                    {/* --- EDGES TAB --- */}
                     <TabsContent value="edges">
                         <Card className="shadow-xl border-slate-200 dark:border-slate-800">
                             <CardHeader className="flex flex-row items-center justify-between border-b pb-6">
@@ -588,7 +571,7 @@ export default function Admin() {
                                             <TableHead></TableHead>
                                             <TableHead>To</TableHead>
                                             <TableHead>Type</TableHead>
-                                            <TableHead>Distance</TableHead>
+                                            <TableHead>Time</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -610,7 +593,7 @@ export default function Admin() {
                                                 <TableCell>
                                                     <Badge variant="secondary" className="capitalize">{edge.type}</Badge>
                                                 </TableCell>
-                                                <TableCell>{edge.weight}m</TableCell>
+                                                <TableCell>{edge.weight}s</TableCell>
                                                 <TableCell className="text-right">
                                                     <Button variant="ghost" size="icon" onClick={() => {
                                                         setEditingEdge(edge);
@@ -635,34 +618,18 @@ export default function Admin() {
                         </Card>
                     </TabsContent>
 
-                    {/* --- ROUTES TAB --- */}
                     <TabsContent value="routes">
-                        <Card className="shadow-xl border-slate-200 dark:border-slate-800">
-                            <CardHeader className="flex flex-row items-center justify-between border-b pb-6">
+                        <Card className="shadow-sm">
+                            <CardHeader className="flex flex-row items-center justify-between border-b pb-6 text-left">
                                 <div>
-                                    <CardTitle>Route Management</CardTitle>
-                                    <CardDescription>Design fixed paths or overrides between areas</CardDescription>
+                                    <CardTitle>Manual Route Overrides</CardTitle>
+                                    <CardDescription>Custom paths that override graph auto-generation</CardDescription>
                                 </div>
                                 <div className="flex gap-2">
-                                    <Button variant="destructive" size="sm" onClick={() => {
-                                        if (confirm("Are you sure you want to delete ALL custom routes?")) {
-                                            routes.forEach(r => deleteRoute(r.from, r.to));
-                                            toast.success("All custom routes cleared");
-                                        }
-                                    }}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Clear All
+                                    <Button variant="outline" onClick={handleBulkGenerate}>
+                                        <RotateCcw className="mr-2 h-4 w-4 text-primary" /> Bulk Generate
                                     </Button>
-                                    <Button variant="outline" size="sm" onClick={handleBulkGenerate}>
-                                        <RouteIcon className="mr-2 h-4 w-4" /> Bulk Generate All
-                                    </Button>
-                                    <Button onClick={() => {
-                                        setEditingRoute(null);
-                                        setRouteFrom("");
-                                        setRouteTo("");
-                                        setRouteSteps([]);
-                                        setRouteEnabled(true);
-                                        setIsRouteDialogOpen(true);
-                                    }}>
+                                    <Button onClick={() => { setEditingRoute(null); setRouteFrom(""); setRouteTo(""); setRouteSteps([]); setIsRouteDialogOpen(true); }}>
                                         <Plus className="mr-2 h-4 w-4" /> Design Route
                                     </Button>
                                 </div>
@@ -670,45 +637,35 @@ export default function Admin() {
                             <CardContent className="pt-6">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="bg-slate-50 dark:bg-slate-900/50">
-                                            <TableHead>From/To</TableHead>
-                                            <TableHead>Complexity</TableHead>
+                                        <TableRow className="bg-slate-50/50">
+                                            <TableHead>From → To</TableHead>
+                                            <TableHead>Steps</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {routes.map((r, i) => (
-                                            <TableRow key={`${r.from}-${r.to}-${i}`} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20">
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2 font-medium">
-                                                        <span className="text-slate-900">{locations.find(l => l.id === r.from)?.name || r.from}</span>
-                                                        <ChevronRight className="h-3 w-3 text-slate-400" />
-                                                        <span className="text-primary">{locations.find(l => l.id === r.to)?.name || r.to}</span>
-                                                    </div>
+                                        {routes.map((route, i) => (
+                                            <TableRow key={`${route.from}-${route.to}-${i}`}>
+                                                <TableCell className="font-bold">
+                                                    {locations.find(l => l.id === route.from)?.name || route.from}
+                                                    <span className="mx-2 text-primary">→</span>
+                                                    {locations.find(l => l.id === route.to)?.name || route.to}
                                                 </TableCell>
+                                                <TableCell>{route.steps.length} segments</TableCell>
                                                 <TableCell>
-                                                    <Badge variant="outline">{r.steps.length} Steps</Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant={r.isEnabled ? "success" : "destructive"}>
-                                                        {r.isEnabled ? "Live" : "Disabled"}
-                                                    </Badge>
+                                                    <Badge variant={route.isEnabled ? "default" : "secondary"}>{route.isEnabled ? "Enabled" : "Draft"}</Badge>
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <Button variant="ghost" size="icon" onClick={() => {
-                                                        setEditingRoute(r);
-                                                        setRouteFrom(r.from);
-                                                        setRouteTo(r.to);
-                                                        setRouteSteps(r.steps);
-                                                        setRouteEnabled(r.isEnabled);
+                                                        setEditingRoute(route);
+                                                        setRouteFrom(route.from);
+                                                        setRouteTo(route.to);
+                                                        setRouteSteps(route.steps);
+                                                        setRouteEnabled(route.isEnabled);
                                                         setIsRouteDialogOpen(true);
-                                                    }}>
-                                                        <Eye className="h-4 w-4 text-primary" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => deleteRoute(r.from, r.to)}>
-                                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                                    </Button>
+                                                    }}><Save className="h-4 w-4 text-primary" /></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => deleteRoute(route.from, route.to)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -718,85 +675,78 @@ export default function Admin() {
                         </Card>
                     </TabsContent>
 
-                    {/* --- FEEDBACK TAB --- */}
                     <TabsContent value="feedback">
-                        <Card className="shadow-xl border-slate-200 dark:border-slate-800">
-                            <CardHeader border-b pb-6>
-                                <CardTitle>User Feedback</CardTitle>
-                                <CardDescription>Reviews and reports from visitors</CardDescription>
+                        <Card className="shadow-sm">
+                            <CardHeader className="border-b">
+                                <CardTitle>User Sentiments</CardTitle>
+                                <CardDescription>Ratings and comments from visitors</CardDescription>
                             </CardHeader>
-                            <CardContent className="pt-6">
-                                {feedback.length > 0 ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {feedback.map(fb => (
-                                            <Card key={fb.id} className="bg-white dark:bg-slate-900 overflow-hidden border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                                                <CardHeader className="p-4 bg-slate-50/50 dark:bg-slate-900 pb-2">
-                                                    <div className="flex justify-between items-start">
-                                                        <div className="flex gap-0.5">
-                                                            {[1, 2, 3, 4, 5].map(i => (
-                                                                <span key={i} className={i <= fb.rating ? "text-amber-400 text-lg" : "text-slate-200 dark:text-slate-800 text-lg"}>★</span>
-                                                            ))}
-                                                        </div>
-                                                        <span className="text-[10px] font-mono text-slate-400">{new Date(fb.timestamp).toLocaleString()}</span>
+                            <CardContent className="pt-6 text-left">
+                                <div className="space-y-4">
+                                    {feedback.length > 0 ? feedback.map(fb => (
+                                        <div key={fb.id} className="p-5 rounded-2xl border bg-white dark:bg-slate-900 shadow-sm">
+                                            <div className="flex justify-between items-start mb-3 text-left">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold border border-amber-100 italic">
+                                                        {fb.rating}★
                                                     </div>
-                                                </CardHeader>
-                                                <CardContent className="p-4 pt-4">
-                                                    <p className="text-sm font-medium italic text-slate-700 dark:text-slate-300">"{fb.comment}"</p>
-                                                    {(fb.from || fb.to) && (
-                                                        <div className="mt-4 pt-3 border-t border-slate-50 flex flex-wrap gap-2">
-                                                            <Badge variant="outline" className="text-[10px] uppercase">{fb.from} → {fb.to}</Badge>
-                                                        </div>
-                                                    )}
-                                                </CardContent>
-                                            </Card>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-xl border border-dashed text-slate-400">
-                                        <MessageSquare size={48} className="mb-4 opacity-20" />
-                                        <p className="font-medium">No feedback entries yet</p>
-                                    </div>
-                                )}
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-slate-400 font-mono tracking-tight">{new Date(fb.timestamp).toLocaleString()}</span>
+                                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                                            {fb.from ? `${fb.from} to ${fb.to}` : "General Feedback"}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <Badge variant="outline" className="text-[10px]">ID: {fb.id}</Badge>
+                                            </div>
+                                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed pl-1">"{fb.comment}"</p>
+                                        </div>
+                                    )) : (
+                                        <div className="text-center py-20 text-slate-300">
+                                            <MessageSquare size={48} className="mx-auto mb-4 opacity-10" />
+                                            <p className="font-medium text-lg">Silence is golden. No feedback yet.</p>
+                                        </div>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
                 </Tabs>
 
                 {/* --- MODALS --- */}
-
                 {/* Floor Modal */}
                 <Dialog open={isFloorDialogOpen} onOpenChange={setIsFloorDialogOpen}>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>{editingFloor ? "Edit Floor" : "Add New Floor"}</DialogTitle>
+                            <DialogTitle>{editingFloor ? "Edit Building Level" : "Construct New Floor"}</DialogTitle>
                         </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="floorNumber">Floor Number (Level)</Label>
-                                <Input id="floorNumber" type="number" value={floorNumber} onChange={(e) => setFloorNumber(e.target.value)} placeholder="0 for Ground, 1 for First..." />
+                        <div className="grid gap-6 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="fnum" className="text-right">Level #</Label>
+                                <Input id="fnum" type="number" value={floorNumber} onChange={(e) => setFloorNumber(e.target.value)} className="col-span-3" />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="floorLabel">Display Name</Label>
-                                <Input id="floorLabel" value={floorLabel} onChange={(e) => setFloorLabel(e.target.value)} placeholder="e.g. Ground Floor" />
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="fname" className="text-right">Label</Label>
+                                <Input id="fname" value={floorLabel} onChange={(e) => setFloorLabel(e.target.value)} placeholder="e.g. Ground Floor" className="col-span-3" />
                             </div>
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setIsFloorDialogOpen(false)}>Cancel</Button>
-                            <Button onClick={handleSaveFloor}>Save Changes</Button>
+                            <Button onClick={handleSaveFloor}>Establish Level</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
 
                 {/* Location Modal */}
                 <Dialog open={isLocDialogOpen} onOpenChange={setIsLocDialogOpen}>
-                    <DialogContent className="max-w-xl">
+                    <DialogContent className="sm:max-w-[500px]">
                         <DialogHeader>
-                            <DialogTitle>{editingLoc ? "Edit Location" : "Create New Location"}</DialogTitle>
+                            <DialogTitle>{editingLoc ? `Relocate: ${editingLoc.name}` : "Architect New Location"}</DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-6 py-4">
                             <div className="grid gap-2">
-                                <Label>Location Name</Label>
-                                <Input value={locName} onChange={(e) => setLocName(e.target.value)} placeholder="Room 302, Principal's Office..." />
+                                <Label htmlFor="locName">Location Title</Label>
+                                <Input id="locName" value={locName} onChange={(e) => setLocName(e.target.value)} placeholder="e.g. Server Room A" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
@@ -825,6 +775,18 @@ export default function Admin() {
                             <div className="grid gap-2">
                                 <Label>Human-Friendly Cue (Hint)</Label>
                                 <Input value={locCue} onChange={(e) => setLocCue(e.target.value)} placeholder="e.g. near the large wooden door" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label className="flex items-center gap-2">
+                                    Panorama / Landmark Image URL
+                                    <Badge variant="outline" className="text-[10px] uppercase">360 Support</Badge>
+                                </Label>
+                                <Input value={locImage} onChange={(e) => setLocImage(e.target.value)} placeholder="https://example.com/panorama.jpg" />
+                                {locImage && (
+                                    <div className="mt-2 h-32 rounded-lg overflow-hidden border">
+                                        <PanoramaViewer imageSrc={locImage} className="w-full h-full" />
+                                    </div>
+                                )}
                             </div>
                             <div className="border rounded-xl p-4 bg-slate-50 dark:bg-slate-900/50 space-y-4">
                                 <div className="flex justify-between items-center">
@@ -917,12 +879,12 @@ export default function Admin() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
-                                    <Label>Distance (meters)</Label>
-                                    <Input type="number" value={edgeWeight} onChange={(e) => setEdgeWeight(e.target.value)} />
+                                    <Label>Walking Time (seconds)</Label>
+                                    <Input type="number" value={edgeWeight} onChange={(e) => setEdgeWeight(e.target.value)} placeholder="e.g. 30" />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label>Connection Type</Label>
-                                    <Select value={edgeType} onValueChange={setEdgeType}>
+                                    <Select value={edgeType} onValueChange={(v) => setEdgeType(v)}>
                                         <SelectTrigger className="capitalize"><SelectValue /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="walk">Walk</SelectItem>
@@ -948,16 +910,16 @@ export default function Admin() {
                 <Dialog open={isRouteDialogOpen} onOpenChange={setIsRouteDialogOpen}>
                     <DialogContent className="max-w-4xl max-h-[95vh] flex flex-col p-0 overflow-hidden gap-0">
                         <DialogHeader className="p-6 pb-0 mb-4">
-                            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                            <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-left">
                                 <RouteIcon className="h-6 w-6 text-primary" />
                                 {editingRoute ? "Edit Optimized Route" : "Design New Navigation Chain"}
                             </DialogTitle>
-                            <CardDescription>Chain multiple steps to guide users from A to B with visual cues.</CardDescription>
+                            <CardDescription className="text-left">Chain multiple steps to guide users from A to B with visual cues.</CardDescription>
                         </DialogHeader>
 
                         <div className="flex-1 overflow-hidden flex flex-col px-6">
                             <div className="grid grid-cols-2 gap-6 mb-6">
-                                <div className="space-y-2">
+                                <div className="space-y-2 text-left">
                                     <Label className="text-sm font-semibold text-slate-500 uppercase tracking-tight">Origin Point</Label>
                                     <Select value={routeFrom} onValueChange={setRouteFrom} disabled={!!editingRoute}>
                                         <SelectTrigger className="h-12 border-2"><SelectValue placeholder="Select starting location" /></SelectTrigger>
@@ -968,7 +930,7 @@ export default function Admin() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-2 text-left">
                                     <Label className="text-sm font-semibold text-slate-500 uppercase tracking-tight">Arrival Destination</Label>
                                     <Select value={routeTo} onValueChange={setRouteTo} disabled={!!editingRoute}>
                                         <SelectTrigger className="h-12 border-2"><SelectValue placeholder="Select target location" /></SelectTrigger>
@@ -1003,8 +965,8 @@ export default function Admin() {
                             <ScrollArea className="flex-1 border rounded-xl bg-slate-50/30 p-4 mb-6">
                                 <div className="space-y-4">
                                     {routeSteps.map((step, idx) => (
-                                        <div key={idx} className="bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-sm group hover:border-primary/50 transition-all">
-                                            <div className="flex justify-between items-center mb-4">
+                                        <div key={idx} className="bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-sm group hover:border-primary/50 transition-all text-left">
+                                            <div className="flex justify-between items-center mb-4 text-left">
                                                 <div className="flex items-center gap-3">
                                                     <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs ring-4 ring-primary/10">
                                                         {idx + 1}
@@ -1061,6 +1023,10 @@ export default function Admin() {
                                                         <Label className="text-[10px] uppercase font-bold text-slate-400">Kannada</Label>
                                                         <Input placeholder="ಕನ್ನಡ" value={step.instruction_kn} onChange={(e) => updateStep(idx, "instruction_kn", e.target.value)} />
                                                     </div>
+                                                    <div className="space-y-2 md:col-span-1">
+                                                        <Label className="text-[10px] uppercase font-bold text-slate-400">Step Image Override</Label>
+                                                        <Input placeholder="Image URL" value={step.landmarkImage} onChange={(e) => updateStep(idx, "landmarkImage", e.target.value)} />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1075,7 +1041,7 @@ export default function Admin() {
                             </ScrollArea>
                         </div>
 
-                        <DialogFooter className="p-6 border-t bg-slate-50 dark:bg-slate-900/50">
+                        <DialogFooter className="p-6 border-t bg-slate-50 dark:bg-slate-900/50 text-right">
                             <Button variant="outline" onClick={() => setIsRouteDialogOpen(false)}>Cancel Editor</Button>
                             <Button onClick={handleSaveRoute} className="px-8 shadow-lg shadow-primary/20">
                                 <Save className="h-4 w-4 mr-2" />
@@ -1098,7 +1064,7 @@ function StatsCard({ title, value, icon, description, color = "primary" }: any) 
     };
 
     return (
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow text-left">
             <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{title}</p>
@@ -1112,5 +1078,38 @@ function StatsCard({ title, value, icon, description, color = "primary" }: any) 
                 </div>
             </CardContent>
         </Card>
+    );
+}
+
+function NavigationIcon(props: any) {
+    return (
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+        </svg>
+    )
+}
+
+function ActionBtn({ icon, label, onClick }: any) {
+    return (
+        <button
+            onClick={onClick}
+            className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm active:scale-95 border-slate-200 dark:border-slate-800"
+        >
+            <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center">
+                {icon}
+            </div>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight">{label}</span>
+        </button>
     );
 }

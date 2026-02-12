@@ -1,4 +1,4 @@
-import React from "react";
+import React, { createContext, useContext, useState, useEffect, type ReactNode, type FC } from "react";
 import { locations as initialLocations, Location } from "@/data/locations";
 import { routes as initialRoutes, Route } from "@/data/routes";
 import { floors as initialFloors, Floor } from "@/data/floors";
@@ -38,76 +38,101 @@ interface NavigationContextType {
     resetToDefaults: () => void;
 }
 
-const NavigationContext = React.createContext<NavigationContextType | undefined>(undefined);
+const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
-export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [locations, setLocations] = React.useState<Location[]>([]);
-    const [routes, setRoutes] = React.useState<Route[]>([]);
-    const [floors, setFloors] = React.useState<Floor[]>([]);
-    const [feedback, setFeedback] = React.useState<Feedback[]>([]);
-    const [stats, setStats] = React.useState<UsageStats>({
+export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) => {
+    const [locations, setLocations] = useState<Location[]>([]);
+    const [routes, setRoutes] = useState<Route[]>([]);
+    const [floors, setFloors] = useState<Floor[]>([]);
+    const [feedback, setFeedback] = useState<Feedback[]>([]);
+    const [stats, setStats] = useState<UsageStats>({
         totalNavigations: 0,
         routesFound: 0,
         routesNotFound: 0,
         popularDestinations: {}
     });
-    const [floorMaps, setFloorMaps] = React.useState<Record<number, string>>({});
-    const [edges, setEdges] = React.useState<Edge[]>([]);
+    const [floorMaps, setFloorMaps] = useState<Record<number, string>>({});
+    const [edges, setEdges] = useState<Edge[]>([]);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     // Initialize from LocalStorage or Defaults
-    React.useEffect(() => {
-        const storedLocations = localStorage.getItem("locations");
-        const storedRoutes = localStorage.getItem("routes_v3");
-        const storedFloors = localStorage.getItem("floors");
-        const storedFeedback = localStorage.getItem("feedback");
-        const storedStats = localStorage.getItem("usageStats");
-        const storedMaps = localStorage.getItem("floorMaps");
-        const storedEdges = localStorage.getItem("edges");
+    useEffect(() => {
+        try {
+            const storedLocations = localStorage.getItem("locations");
+            const storedRoutes = localStorage.getItem("routes_v3");
+            const storedFloors = localStorage.getItem("floors");
+            const storedFeedback = localStorage.getItem("feedback");
+            const storedStats = localStorage.getItem("usageStats");
+            const storedMaps = localStorage.getItem("floorMaps");
+            const storedEdges = localStorage.getItem("edges");
 
-        if (storedLocations) setLocations(JSON.parse(storedLocations));
-        else setLocations(initialLocations);
+            if (storedLocations) setLocations(JSON.parse(storedLocations));
+            else setLocations(initialLocations);
 
-        if (storedRoutes) setRoutes(JSON.parse(storedRoutes));
-        else setRoutes(initialRoutes);
+            if (storedRoutes) setRoutes(JSON.parse(storedRoutes));
+            else setRoutes(initialRoutes);
 
-        if (storedFloors) setFloors(JSON.parse(storedFloors));
-        else setFloors(initialFloors);
+            if (storedFloors) setFloors(JSON.parse(storedFloors));
+            else setFloors(initialFloors);
 
-        if (storedFeedback) setFeedback(JSON.parse(storedFeedback));
-        if (storedStats) setStats(JSON.parse(storedStats));
-        if (storedMaps) setFloorMaps(JSON.parse(storedMaps));
-        if (storedEdges) setEdges(JSON.parse(storedEdges));
-        else setEdges([]);
+            if (storedFeedback) setFeedback(JSON.parse(storedFeedback));
+            if (storedStats) setStats(JSON.parse(storedStats));
+            if (storedMaps) setFloorMaps(JSON.parse(storedMaps));
+            if (storedEdges) setEdges(JSON.parse(storedEdges));
+            else setEdges([]);
+
+            setIsInitialized(true);
+        } catch (e) {
+            console.error("Failed to load state from localStorage:", e);
+            setLocations(initialLocations);
+            setRoutes(initialRoutes);
+            setFloors(initialFloors);
+            setIsInitialized(true);
+        }
     }, []);
 
-    // Persistence Effects
-    React.useEffect(() => {
-        if (locations.length > 0) localStorage.setItem("locations", JSON.stringify(locations));
-    }, [locations]);
+    // Persistence Effects (only run after initialization to prevent overwriting with [])
+    useEffect(() => {
+        if (isInitialized) {
+            localStorage.setItem("locations", JSON.stringify(locations));
+        }
+    }, [locations, isInitialized]);
 
-    React.useEffect(() => {
-        if (routes.length > 0) localStorage.setItem("routes_v3", JSON.stringify(routes));
-    }, [routes]);
+    useEffect(() => {
+        if (isInitialized) {
+            localStorage.setItem("routes_v3", JSON.stringify(routes));
+        }
+    }, [routes, isInitialized]);
 
-    React.useEffect(() => {
-        if (floors.length > 0) localStorage.setItem("floors", JSON.stringify(floors));
-    }, [floors]);
+    useEffect(() => {
+        if (isInitialized) {
+            localStorage.setItem("floors", JSON.stringify(floors));
+        }
+    }, [floors, isInitialized]);
 
-    React.useEffect(() => {
-        localStorage.setItem("feedback", JSON.stringify(feedback));
-    }, [feedback]);
+    useEffect(() => {
+        if (isInitialized) {
+            localStorage.setItem("feedback", JSON.stringify(feedback));
+        }
+    }, [feedback, isInitialized]);
 
-    React.useEffect(() => {
-        localStorage.setItem("usageStats", JSON.stringify(stats));
-    }, [stats]);
+    useEffect(() => {
+        if (isInitialized) {
+            localStorage.setItem("usageStats", JSON.stringify(stats));
+        }
+    }, [stats, isInitialized]);
 
-    React.useEffect(() => {
-        if (Object.keys(floorMaps).length > 0) localStorage.setItem("floorMaps", JSON.stringify(floorMaps));
-    }, [floorMaps]);
+    useEffect(() => {
+        if (isInitialized) {
+            localStorage.setItem("floorMaps", JSON.stringify(floorMaps));
+        }
+    }, [floorMaps, isInitialized]);
 
-    React.useEffect(() => {
-        localStorage.setItem("edges", JSON.stringify(edges));
-    }, [edges]);
+    useEffect(() => {
+        if (isInitialized) {
+            localStorage.setItem("edges", JSON.stringify(edges));
+        }
+    }, [edges, isInitialized]);
 
     const addLocation = (location: Location) => {
         setLocations(prev => [...prev, location]);
@@ -175,15 +200,19 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     const recordNavigation = (success: boolean, toId?: string) => {
         setStats(prev => {
-            const newStats = { ...prev };
-            newStats.totalNavigations += 1;
+            const currentStats = prev || { totalNavigations: 0, routesFound: 0, routesNotFound: 0, popularDestinations: {} };
+            const newStats = { ...currentStats };
+
+            newStats.totalNavigations = (newStats.totalNavigations || 0) + 1;
+
             if (success) {
-                newStats.routesFound += 1;
+                newStats.routesFound = (newStats.routesFound || 0) + 1;
                 if (toId) {
+                    if (!newStats.popularDestinations) newStats.popularDestinations = {};
                     newStats.popularDestinations[toId] = (newStats.popularDestinations[toId] || 0) + 1;
                 }
             } else {
-                newStats.routesNotFound += 1;
+                newStats.routesNotFound = (newStats.routesNotFound || 0) + 1;
             }
             return newStats;
         });
@@ -237,7 +266,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 };
 
 export const useNavigationContext = () => {
-    const context = React.useContext(NavigationContext);
+    const context = useContext(NavigationContext);
     if (!context) throw new Error("useNavigationContext must be used within a NavigationProvider");
     return context;
 };

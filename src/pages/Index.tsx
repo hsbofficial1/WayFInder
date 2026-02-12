@@ -1,23 +1,17 @@
-import React, { useState, useEffect, type ReactNode } from "react";
-
+import React, { useState, useEffect } from "react";
 import {
   Navigation,
   AlertCircle,
   Loader2,
   MapPin,
   Target,
-  Building2,
-  Armchair,
-  LogOut,
-  FlaskConical,
-  Wifi,
-  ChevronRight
+  ChevronRight,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LocationSelector from "@/components/LocationSelector";
 import StepView from "@/components/StepView";
-import { useFindRoute, useLocations, type RouteWithSteps, type Location } from "@/hooks/useNavigation";
-import { cn } from "@/lib/utils";
+import { useFindRoute, useLocations, type RouteWithSteps } from "@/hooks/useNavigation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/context/LanguageContext";
 import { useNavigationContext } from "@/context/NavigationContext";
@@ -32,11 +26,14 @@ const Index = () => {
 
   const { recordNavigation, floors } = useNavigationContext();
   const { data: allLocations } = useLocations();
-  const locations = allLocations?.filter(l => {
-    if (l.isUnavailable) return false;
-    const floor = floors.find(f => f.number === l.floor);
-    return !floor?.isUnavailable;
-  }) || [];
+
+  const locations = React.useMemo(() => {
+    return allLocations?.filter(l => {
+      if (l.isUnavailable) return false;
+      const floor = floors.find(f => f.number === l.floor);
+      return !floor?.isUnavailable;
+    }) || [];
+  }, [allLocations, floors]);
 
   const { data: foundRoute, isLoading: isSearching } = useFindRoute(
     from,
@@ -59,7 +56,7 @@ const Index = () => {
   };
 
   // Watch for query result
-  React.useEffect(() => {
+  useEffect(() => {
     if (searchTriggered && !isSearching && foundRoute !== undefined) {
       if (foundRoute && !activeRoute) {
         setActiveRoute(foundRoute);
@@ -79,30 +76,6 @@ const Index = () => {
     setTo("");
     setError("");
     setSearchTriggered(false);
-  };
-
-  const handleQuickSelect = (type: string, nameSearch?: string) => {
-    if (!locations) return;
-
-    const normalize = (s: string) => s.toLowerCase();
-
-    // Find best match
-    const match = locations.find(l => {
-      if (nameSearch) {
-        if (nameSearch === 'Washroom') {
-          const n = normalize(l.name);
-          return n.includes('washroom') || n.includes('restroom') || n.includes('toilet');
-        }
-        return normalize(l.name).includes(normalize(nameSearch));
-      }
-      return l.type === type;
-    });
-
-    if (match) {
-      setTo(match.id);
-      setError("");
-      setSearchTriggered(false);
-    }
   };
 
   const handleLost = () => {
@@ -170,34 +143,6 @@ const Index = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 xs:grid-cols-3 gap-3">
-            <QuickBtn
-              icon={<Building2 size={24} />}
-              label="Reception"
-              onClick={() => handleQuickSelect('entry', 'Reception')}
-            />
-            <QuickBtn
-              icon={<Armchair size={24} />}
-              label="Washroom"
-              onClick={() => handleQuickSelect('utility', 'Washroom')} // Fallback to Restroom/Washroom
-            />
-            <QuickBtn
-              icon={<LogOut size={24} />}
-              label="Exit"
-              onClick={() => handleQuickSelect('entry', 'Exit')}
-            />
-            <QuickBtn
-              icon={<FlaskConical size={24} />}
-              label="Labs"
-              onClick={() => handleQuickSelect('lab')}
-            />
-            <QuickBtn
-              icon={<Wifi size={24} />}
-              label="Hotspots"
-              onClick={() => handleQuickSelect('hotspot')}
-            />
-          </div>
-
           {error && (
             <div className="flex items-start gap-3 text-destructive bg-destructive/5 border border-destructive/20 px-4 py-4 rounded-xl text-sm animate-in fade-in slide-in-from-bottom-2">
               <AlertCircle size={18} className="mt-0.5 shrink-0" />
@@ -218,6 +163,17 @@ const Index = () => {
             )}
             {isSearching ? "Finding Route..." : t('start_navigation')}
           </Button>
+
+          {foundRoute?.duration !== undefined && !isSearching && !error && (
+            <div className="flex items-center justify-center gap-2 py-3 bg-primary/5 rounded-xl border border-primary/10 animate-in fade-in slide-in-from-top-2">
+              <Clock size={16} className="text-primary" />
+              <span className="text-sm font-semibold text-primary">
+                Estimated Time: {foundRoute.duration >= 60
+                  ? `${Math.floor(foundRoute.duration / 60)}m ${foundRoute.duration % 60}s`
+                  : `${foundRoute.duration}s`}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Info section */}
@@ -233,18 +189,6 @@ const Index = () => {
 };
 
 // Helper Components
-const QuickBtn = ({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-card border border-border hover:border-primary/50 hover:bg-accent/5 transition-all shadow-sm active:scale-95 h-28"
-  >
-    <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-      {icon}
-    </div>
-    <span className="text-sm font-semibold text-foreground">{label}</span>
-  </button>
-);
-
 const InfoCard = ({ icon, text }: { icon: string, text: string }) => (
   <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 text-muted-foreground whitespace-nowrap snap-center shrink-0">
     <span className="text-lg">{icon}</span>

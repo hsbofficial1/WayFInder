@@ -31,6 +31,7 @@ export interface RouteWithSteps {
   from: string;
   to: string;
   steps: RouteStep[];
+  duration?: number; // In seconds
 }
 
 export function useFindRoute(from: string, to: string, enabled: boolean) {
@@ -73,6 +74,7 @@ export function useFindRoute(from: string, to: string, enabled: boolean) {
         from,
         to,
         steps,
+        duration: graphResult.totalWeight
       },
       isLoading: false
     };

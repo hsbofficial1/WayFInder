@@ -81,21 +81,41 @@ const landmarks: Record<string, {
     image?: string
 }> = {
     // Ground Floor
-    "reception": { label: "Reception", cue: "the main desk area" },
-    "asap-office": { label: "Asap Office", cue: "the office with ASAP branding" },
+    "reception": {
+        label: "Reception",
+        cue: "the main desk area",
+        image: "https://photo-sphere-viewer.js.org/assets/sphere.jpg" // High quality indoor 360
+    },
+    "asap-office": {
+        label: "Asap Office",
+        cue: "the office with ASAP branding",
+        image: "https://p1.pstatp.com/origin/pgc-image/4a1d47348981434f81c7e9f3b1742721" // Modern lobby 360
+    },
     "emergency-exit": { label: "Emergency Exit", cue: "the brightly lit exit sign" },
     "leap-ksum": { label: "Leap / Kerala Startup Mission", cue: "the KSUM workspace" },
-    "openmind-makerspace": { label: "Openmind Makerspace", cue: "the room with 3D printers and tools" },
+    "openmind-makerspace": {
+        label: "Openmind Makerspace",
+        cue: "the room with 3D printers and tools",
+        image: "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/equirectangular/park.jpg" // Sample 360
+    },
     "sane-room": { label: "The Sane Room", cue: "the quiet zone" },
     "autonomous-auas": { label: "Autonomous AUAS", cue: "the AUAS research lab" },
     "washroom-g": { label: "Washroom 1", cue: "the restroom near Sane Room" },
-    "dining-hall": { label: "Dining Hall", cue: "the large hall with tables" },
+    "dining-hall": {
+        label: "Dining Hall",
+        cue: "the large hall with tables",
+        image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000"
+    },
     "first-aid-room": { label: "First Aid Room", cue: "the room with a medical cross" },
     "staircase-g": { label: "Stairs 1", cue: "the main stairs" },
     "lift-g": { label: "Lift 1", cue: "the elevator bank" },
 
     // 1st Floor
-    "rappin-range": { label: "Rappin' Range", cue: "the area with soundproofing" },
+    "rappin-range": {
+        label: "Rappin' Range",
+        cue: "the area with soundproofing",
+        image: "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/22ed7856b3e84325a728b7f5e3b5e4c0~tplv-k3u1fbpfcp-watermark.image" // Studio-like 360
+    },
     "crown-down": { label: "Crown Down", cue: "the chill area" },
     "unknown-room": { label: "Unknown Room", cue: "the unmarked door" },
     "link-admin-office": { label: "Link Administrative Office", cue: "the admin hub" },
@@ -247,7 +267,17 @@ export const findGraphRoute = (
         }
     }
 
-    return { path: pathIds, steps };
+    // Calculate total weight
+    let totalWeight = 0;
+    for (let i = 0; i < pathIds.length - 1; i++) {
+        const curr = pathIds[i];
+        const next = pathIds[i + 1];
+        const neighbors = activeGraph.adjacencyList[curr] || [];
+        const edge = neighbors.find(e => e.to === next);
+        if (edge) totalWeight += edge.weight;
+    }
+
+    return { path: pathIds, steps, totalWeight };
 };
 
 function generateInstructionML(base: string, icon: string, curr: any, next: any, floor?: number) {

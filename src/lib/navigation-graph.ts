@@ -118,6 +118,6 @@ export class NavigationGraph {
         if (cosTheta > 0.8) return "straight"; // < 36 degrees
         if (cosTheta < -0.8) return "uturn";
 
-        return cross > 0 ? "left" : "right";
+        return cross < 0 ? "left" : "right";
     }
 }
