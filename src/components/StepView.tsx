@@ -31,6 +31,17 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+
+  // High-level defensive check
+  if (!route || !route.steps || route.steps.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-dvh p-8 text-center gap-4">
+        <p className="text-muted-foreground font-medium">Something went wrong with this route.</p>
+        <Button onClick={onRestart}>Go Back</Button>
+      </div>
+    );
+  }
+
   const step = route.steps[currentStep];
   const total = route.steps.length;
   const isFirst = currentStep === 0;
@@ -108,6 +119,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   };
 
   const getInstruction = (s: any) => {
+    if (!s) return "Go to the next location";
     if (language === 'ml') return s.instruction_ml || s.instruction;
     if (language === 'kn') return s.instruction_kn || s.instruction;
     return s.instruction;
@@ -172,7 +184,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
           <div className="relative group shrink-0">
             <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 group-hover:bg-primary/30 transition-colors" />
             <div className="relative bg-card p-6 rounded-[2.5rem] shadow-xl shadow-primary/5 border border-border/50">
-              <DirectionIcon type={(step?.icon || "straight") as IconType} size={72} />
+              <DirectionIcon type={(step?.icon_type || step?.icon || "straight") as IconType} size={72} />
             </div>
           </div>
 
