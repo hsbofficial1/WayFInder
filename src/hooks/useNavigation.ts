@@ -1,9 +1,11 @@
-// Re-export types
-export type { Location } from "@/data/locations";
-export type { Route, RouteStep } from "@/data/routes";
+import { useMemo } from "react";
 import { useNavigationContext } from "@/context/NavigationContext";
 import { findGraphRoute } from "@/data/graphData";
 import { RouteStep } from "@/data/routes";
+
+// Re-export types
+export type { Location } from "@/data/locations";
+export type { Route, RouteStep } from "@/data/routes";
 
 export type LocationType = "entry" | "room" | "lab" | "office" | "hotspot" | "utility";
 
@@ -37,28 +39,19 @@ export interface RouteWithSteps {
 export function useFindRoute(from: string, to: string, enabled: boolean) {
   const { routes, locations, edges } = useNavigationContext();
 
-  if (!enabled || !from || !to) {
-    return { data: null, isLoading: false };
-  }
+  // 1. Memoize manual route selection
+  const manualRoute = useMemo(() => {
+    if (!enabled || !from || !to) return null;
+    return routes.find(r => r.from === from && r.to === to);
+  }, [enabled, from, to, routes]);
 
-  // 1. Try Manual Route from Context (Admin overrides)
-  const manualRoute = routes.find(r => r.from === from && r.to === to);
-  if (manualRoute) {
-    return {
-      data: {
-        id: `manual-${from}-${to}`,
-        from,
-        to,
-        steps: manualRoute.steps
-      },
-      isLoading: false
-    };
-  }
+  // 2. Memoize graph route calculation
+  const graphRoute = useMemo(() => {
+    if (!enabled || !from || !to || manualRoute) return null;
 
-  // 2. Try Graph Route (Codebase logic)
-  const graphResult = findGraphRoute(from, to, locations, edges);
-  if (graphResult) {
-    // Map graph steps to RouteStep
+    const graphResult = findGraphRoute(from, to, locations, edges);
+    if (!graphResult) return null;
+
     const steps: RouteStep[] = graphResult.steps.map((step: any) => ({
       instruction: step.instruction,
       instruction_ml: step.instruction_ml,
@@ -69,16 +62,25 @@ export function useFindRoute(from: string, to: string, enabled: boolean) {
     }));
 
     return {
-      data: {
-        id: "local-generated-route",
+      id: "local-generated-route",
+      from,
+      to,
+      steps,
+      duration: graphResult.totalWeight
+    };
+  }, [enabled, from, to, locations, edges, manualRoute]);
+
+  const result = useMemo(() => {
+    if (manualRoute) {
+      return {
+        id: `manual-${from}-${to}`,
         from,
         to,
-        steps,
-        duration: graphResult.totalWeight
-      },
-      isLoading: false
-    };
-  }
+        steps: manualRoute.steps
+      };
+    }
+    return graphRoute;
+  }, [manualRoute, graphRoute, from, to]);
 
-  return { data: null, isLoading: false };
+  return { data: result, isLoading: false };
 }

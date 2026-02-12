@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Navigation,
   AlertCircle,
@@ -27,7 +27,7 @@ const Index = () => {
   const { recordNavigation, floors } = useNavigationContext();
   const { data: allLocations } = useLocations();
 
-  const locations = React.useMemo(() => {
+  const filteredLocations = useMemo(() => {
     return allLocations?.filter(l => {
       if (l.isUnavailable) return false;
       const floor = floors.find(f => f.number === l.floor);
@@ -41,7 +41,21 @@ const Index = () => {
     searchTriggered && !!from && !!to && from !== to
   );
 
-  // Handle route found/not found after query
+  // Transition to navigation view when route is found
+  useEffect(() => {
+    if (searchTriggered && !isSearching) {
+      if (foundRoute) {
+        setActiveRoute(foundRoute);
+        setSearchTriggered(false);
+        recordNavigation(true, to);
+      } else if (foundRoute === null) {
+        setError("Sorry, no route found between these locations. Try different points.");
+        setSearchTriggered(false);
+        recordNavigation(false);
+      }
+    }
+  }, [searchTriggered, isSearching, foundRoute, to, recordNavigation]);
+
   const handleShowRoute = () => {
     setError("");
     if (!from || !to) {
@@ -54,21 +68,6 @@ const Index = () => {
     }
     setSearchTriggered(true);
   };
-
-  // Watch for query result
-  useEffect(() => {
-    if (searchTriggered && !isSearching && foundRoute !== undefined) {
-      if (foundRoute && !activeRoute) {
-        setActiveRoute(foundRoute);
-        setSearchTriggered(false);
-        recordNavigation(true, to);
-      } else if (foundRoute === null && !error) {
-        setError("Sorry, no route found between these locations. Try different points.");
-        setSearchTriggered(false);
-        recordNavigation(false);
-      }
-    }
-  }, [searchTriggered, isSearching, foundRoute, activeRoute, error, to, recordNavigation]);
 
   const handleRestart = () => {
     setActiveRoute(null);
