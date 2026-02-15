@@ -287,8 +287,11 @@ export const findGraphRoute = (
             // In `useNavigation.ts`, it calls `findGraphRoute(from, to, locations, edges)`.
             // So `locations` ARE passed in as the 3rd argument!
 
-            const locationMeta = customLocations?.find(l => l.id === next);
-            const landmarkImage = locationMeta?.image;
+            // Fetch Image if available
+            // User Request: "Use this panorama for every place"
+            // We are setting this to a local path '/panorama.jpg'.
+            // Please save the image you provided as 'panorama.jpg' in your 'public' folder.
+            const landmarkImage = "/panorama.jpg";
 
             steps.push({
                 instruction: instr,
@@ -309,7 +312,8 @@ export const findGraphRoute = (
             instruction_ml: `നിങ്ങൾ ${finalNode.name}-ൽ എത്തിച്ചേർന്നു`,
             instruction_kn: `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${finalNode.name} ತಲುಪಿದೆ`,
             icon_type: "destination",
-            floor: finalNode.floorNumber
+            floor: finalNode.floorNumber,
+            landmarkImage: "/panorama.jpg" // Consistent panorama
         });
     }
 
