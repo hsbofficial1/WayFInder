@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigationContext } from "@/context/NavigationContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,6 @@ import {
     SheetTitle,
     SheetDescription,
     SheetFooter,
-    SheetTrigger
 } from "@/components/ui/sheet";
 import {
     Select,
@@ -19,51 +18,49 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Plus,
     Trash2,
-    Save,
-    RotateCcw,
-    ChevronUp,
-    ChevronDown,
-    Eye,
-    MessageSquare,
     BarChart3,
     Layers,
     MapPin,
     Route as RouteIcon,
+    MessageSquare,
     Image as ImageIcon,
     MoreHorizontal,
     Search,
     GripVertical,
     ArrowRight,
     PanelLeftClose,
-    PanelLeftOpen
+    PanelLeftOpen,
+    Share2, // Replaced Network with Share2
+    ArrowUpRight,
+    Eye
 } from "lucide-react";
 import { toast } from "sonner";
 import { LocationType } from "@/data/locations";
 import { RouteStep, IconType } from "@/data/routes";
 import { Badge } from "@/components/ui/badge";
-import PanoramaViewer from "@/components/PanoramaViewer";
-import { findGraphRoute } from "@/data/graphData";
 import { cn } from "@/lib/utils";
+import { buildingData } from "@/data/building_data"; // Import the source of truth
 
 const LOCATION_TYPES: LocationType[] = ["entry", "room", "lab", "office", "hotspot", "utility"];
 
 export default function Admin() {
     const {
-        locations, routes, floors, feedback, stats, floorMaps, edges,
-        addLocation, updateLocation, deleteLocation,
-        addRoute, updateRoute, deleteRoute,
-        addFloor, updateFloor, deleteFloor,
-        addEdge, updateEdge, deleteEdge,
-        setFloorMap, resetToDefaults
+        locations, routes, floors, feedback, stats,
+        addLocation, updateLocation, addRoute, updateRoute, deleteRoute,
+        addFloor, updateFloor, deleteFloor
     } = useNavigationContext();
 
-    const [activeView, setActiveView] = useState<"dashboard" | "locations" | "routes" | "floors" | "feedback">("dashboard");
+    // Safety check
+    if (!buildingData || !buildingData.building) {
+        console.error("Building Data missing", buildingData);
+        return <div className="p-8 text-destructive">Error: Building Data not found. Check console.</div>;
+    }
+
+    const [activeView, setActiveView] = useState<"dashboard" | "locations" | "routes" | "floors" | "feedback" | "graph">("dashboard");
     const [searchTerm, setSearchTerm] = useState("");
 
     // --- STATE MANAGEMENT ---
@@ -73,15 +70,11 @@ export default function Admin() {
     const [editingItem, setEditingItem] = useState<any>(null);
 
     // Form States
-    // Location
     const [locForm, setLocForm] = useState({ name: "", floor: "0", type: "room" as LocationType, x: "", y: "", cue: "", image: "" });
-    // Route
     const [routeForm, setRouteForm] = useState({ from: "", to: "", steps: [] as RouteStep[], isEnabled: true });
-    // Floor
     const [floorForm, setFloorForm] = useState({ number: "0", label: "" });
 
     // --- HANDLERS ---
-
     const openSheet = (mode: "location" | "route" | "floor", item: any = null) => {
         setSheetMode(mode);
         setEditingItem(item);
@@ -180,7 +173,8 @@ export default function Admin() {
                 <nav className="flex-1 px-3 space-y-1 mt-2">
                     <NavItem active={activeView === "dashboard"} onClick={() => setActiveView("dashboard")} icon={<BarChart3 size={18} />} label="Overview" collapsed={isSidebarCollapsed} />
                     <NavItem active={activeView === "locations"} onClick={() => setActiveView("locations")} icon={<MapPin size={18} />} label="Locations" count={locations.length} collapsed={isSidebarCollapsed} />
-                    <NavItem active={activeView === "routes"} onClick={() => setActiveView("routes")} icon={<RouteIcon size={18} />} label="Routes" count={routes.length} collapsed={isSidebarCollapsed} />
+                    <NavItem active={activeView === "graph"} onClick={() => setActiveView("graph")} icon={<Share2 size={18} />} label="Graph Nodes" collapsed={isSidebarCollapsed} />
+                    <NavItem active={activeView === "routes"} onClick={() => setActiveView("routes")} icon={<RouteIcon size={18} />} label="Manual Routes" count={routes.length} collapsed={isSidebarCollapsed} />
                     <NavItem active={activeView === "floors"} onClick={() => setActiveView("floors")} icon={<Layers size={18} />} label="Floors" count={floors.length} collapsed={isSidebarCollapsed} />
                     <NavItem active={activeView === "feedback"} onClick={() => setActiveView("feedback")} icon={<MessageSquare size={18} />} label="Feedback" count={feedback.length} collapsed={isSidebarCollapsed} />
                 </nav>
@@ -201,7 +195,7 @@ export default function Admin() {
             <main className="flex-1 flex flex-col min-w-0 bg-background/50">
                 {/* Top Bar */}
                 <header className="h-16 border-b flex items-center justify-between px-8 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-                    <h2 className="text-lg font-semibold capitalize">{activeView}</h2>
+                    <h2 className="text-lg font-semibold capitalize">{activeView.replace('graph', 'Graph Data')}</h2>
                     <div className="flex items-center gap-4">
                         {activeView === "locations" && (
                             <div className="relative">
@@ -214,17 +208,19 @@ export default function Admin() {
                                 />
                             </div>
                         )}
-                        <Button
-                            className="h-9 gap-2 shadow-sm"
-                            onClick={() => {
-                                if (activeView === "locations") openSheet("location");
-                                if (activeView === "routes") openSheet("route");
-                                if (activeView === "floors") openSheet("floor");
-                            }}
-                        >
-                            <Plus size={16} />
-                            Add New
-                        </Button>
+                        {activeView !== "dashboard" && activeView !== "graph" && (
+                            <Button
+                                className="h-9 gap-2 shadow-sm"
+                                onClick={() => {
+                                    if (activeView === "locations") openSheet("location");
+                                    if (activeView === "routes") openSheet("route");
+                                    if (activeView === "floors") openSheet("floor");
+                                }}
+                            >
+                                <Plus size={16} />
+                                Add New
+                            </Button>
+                        )}
                     </div>
                 </header>
 
@@ -237,6 +233,97 @@ export default function Admin() {
                                 <StatCard title="Success Rate" value={`${Math.round((stats.routesFound / (stats.totalNavigations || 1)) * 100)}%`} icon={<Badge className="bg-emerald-500 rounded-full w-2 h-2 p-0" />} />
                                 <StatCard title="Active Locations" value={locations.length} icon={<MapPin className="text-orange-500" />} />
                                 <StatCard title="Feedback Score" value="4.8" icon={<MessageSquare className="text-purple-500" />} />
+                            </div>
+                        )}
+
+                        {activeView === "graph" && (
+                            <div className="space-y-8">
+                                <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-lg text-amber-600 text-sm">
+                                    <strong>Read-Only View:</strong> This data is loaded directly from <code>src/data/building_data.ts</code>. To edit nodes or edges, update the code file directly.
+                                </div>
+
+                                {buildingData.building.floors.map((floor) => (
+                                    <div key={floor.floor_id} className="space-y-4">
+                                        <h3 className="text-xl font-bold flex items-center gap-2">
+                                            <Layers size={20} className="text-primary" />
+                                            {floor.floor_name} <span className="text-muted-foreground text-sm font-normal">({floor.floor_id})</span>
+                                        </h3>
+
+                                        {/* Nodes Table */}
+                                        <div className="bg-card border rounded-xl overflow-hidden">
+                                            <div className="px-4 py-3 border-b bg-muted/20 font-medium text-sm flex justify-between">
+                                                <span>Nodes ({floor.nodes.length})</span>
+                                            </div>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead className="text-left bg-muted/10 text-muted-foreground">
+                                                        <tr>
+                                                            <th className="p-3 font-medium">ID</th>
+                                                            <th className="p-3 font-medium">Type</th>
+                                                            <th className="p-3 font-medium">Name</th>
+                                                            <th className="p-3 font-medium">Junction Link</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y">
+                                                        {floor.nodes.map(node => (
+                                                            <tr key={node.node_id} className="hover:bg-muted/10">
+                                                                <td className="p-3 font-mono text-xs">{node.node_id}</td>
+                                                                <td className="p-3">
+                                                                    <Badge variant={node.node_type === 'junction' ? 'secondary' : 'outline'}>
+                                                                        {node.node_type}
+                                                                    </Badge>
+                                                                </td>
+                                                                <td className="p-3 font-medium">{node.name}</td>
+                                                                <td className="p-3 text-muted-foreground">{node.junction_id || '-'}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        {/* Edges Table */}
+                                        <div className="bg-card border rounded-xl overflow-hidden">
+                                            <div className="px-4 py-3 border-b bg-muted/20 font-medium text-sm flex justify-between">
+                                                <span>Edges ({floor.edges?.length || 0})</span>
+                                            </div>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead className="text-left bg-muted/10 text-muted-foreground">
+                                                        <tr>
+                                                            <th className="p-3 font-medium">From</th>
+                                                            <th className="p-3 font-medium">To</th>
+                                                            <th className="p-3 font-medium">Steps</th>
+                                                            <th className="p-3 font-medium">Type</th>
+                                                            <th className="p-3 font-medium">Instruction</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y">
+                                                        {floor.edges?.map((edge, i) => (
+                                                            <tr key={i} className="hover:bg-muted/10">
+                                                                <td className="p-3 font-mono text-xs text-muted-foreground">{edge.from}</td>
+                                                                <td className="p-3 font-mono text-xs text-muted-foreground">{edge.to}</td>
+                                                                <td className="p-3">{edge.distance_steps}</td>
+                                                                <td className="p-3">
+                                                                    <div className="flex items-center gap-1.5 capitalize">
+                                                                        {edge.edge_type === 'corridor' ? <ArrowRight size={14} className="text-blue-500" /> : <ArrowUpRight size={14} className="text-orange-500" />}
+                                                                        {edge.edge_type}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="p-3 italic text-muted-foreground">{edge.instruction}</td>
+                                                            </tr>
+                                                        ))}
+                                                        {(!floor.edges || floor.edges.length === 0) && (
+                                                            <tr>
+                                                                <td colSpan={5} className="p-6 text-center text-muted-foreground">No explicit edges defined. Room connections are auto-generated.</td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
 
@@ -354,19 +441,18 @@ export default function Admin() {
                                 )}
                             </div>
                         )}
-
-                        {/* More sections for Floors/Feedback omitted for brevity but follow same pattern */}
                     </div>
                 </ScrollArea>
             </main>
 
-            {/* EDIT SHEET (Drawer) */}
+            {/* EDIT SHEET logic remains the same... (omitted for brevity in prompt context but included in file write) */}
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetContent className="sm:max-w-xl p-0 overflow-y-auto w-full">
                     <SheetHeader className="px-6 py-6 border-b bg-muted/10">
                         <SheetTitle>
                             {sheetMode === "location" && (editingItem ? "Edit Location" : "New Location")}
                             {sheetMode === "route" && (editingItem ? "Edit Route Sequence" : "New Route Sequence")}
+                            {sheetMode === "floor" && (editingItem ? "Edit Floor" : "New Floor")}
                         </SheetTitle>
                         <SheetDescription>
                             Configure the details below. Changes are saved locally.

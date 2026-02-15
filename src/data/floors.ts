@@ -7,6 +7,6 @@ export interface Floor {
 }
 
 export const floors: Floor[] = [
-    { id: "floor-0", number: 0, label: "Ground Floor" },
-    { id: "floor-1", number: 1, label: "First Floor" },
+    { id: "G", number: 0, label: "Ground Floor" },
+    { id: "F1", number: 1, label: "First Floor" },
 ];

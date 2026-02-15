@@ -1,427 +1,304 @@
-import { NavigationGraph, Point } from "@/lib/navigation-graph";
-import { locations, Location, getLocation } from "./locations";
+import { buildingData } from "./building_data";
+import { BuildingNode, FloorId } from "@/types/building";
 
-const graph = new NavigationGraph();
+// Graph Types
+interface GraphEdge {
+    to: string; // Target Node ID
+    weight: number; // Distance in steps
+    instruction: string;
+    type: string; // "corridor" | "stairs" | "lift"
+    turn?: string;
+}
 
-// Define Coordinates
-const coordinates: Record<string, Point> = {
-    // Ground Floor
-    "reception": { x: 0, y: 0, floor: 0 },
-    "asap-office": { x: -10, y: 10, floor: 0 },
-    "emergency-exit": { x: 10, y: 20, floor: 0 },
-    "leap-ksum": { x: -10, y: 20, floor: 0 },
-    "openmind-makerspace": { x: 10, y: 10, floor: 0 },
-    "sane-room": { x: -10, y: -10, floor: 0 },
-    "autonomous-auas": { x: 10, y: -10, floor: 0 },
-    "washroom-g": { x: -5, y: -15, floor: 0 },
-    "dining-hall": { x: 5, y: -15, floor: 0 },
-    "first-aid-room": { x: 15, y: 15, floor: 0 },
-    "staircase-g": { x: 15, y: 0, floor: 0 },
-    "lift-g": { x: 20, y: 0, floor: 0 },
-
-    // 1st Floor
-    "staircase-1": { x: 15, y: 0, floor: 1 },
-    "lift-1": { x: 20, y: 0, floor: 1 },
-    "rappin-range": { x: -10, y: 10, floor: 1 },
-    "crown-down": { x: 0, y: 15, floor: 1 },
-    "unknown-room": { x: 10, y: 15, floor: 1 },
-    "link-admin-office": { x: 15, y: 10, floor: 1 },
-    "foursquare-link": { x: -10, y: -10, floor: 1 },
-    "noodlin-space": { x: -5, y: -15, floor: 1 },
-    "cranium-room": { x: 5, y: -15, floor: 1 },
-    "server-room-1": { x: 10, y: -10, floor: 1 },
-    "focus-space": { x: 15, y: 5, floor: 1 },
-    "washroom-1": { x: 15, y: -5, floor: 1 },
-    "curiosity-weekends": { x: 0, y: 20, floor: 1 },
-};
-
-// Add Nodes
-Object.entries(coordinates).forEach(([id, coords]) => {
-    graph.addNode(id, coords);
-});
-
-// Add Edges (bidirectional by default)
-// Ground Floor Connections
-graph.addEdge("reception", "staircase-g", 15, "walk");
-graph.addEdge("reception", "lift-g", 20, "walk");
-graph.addEdge("reception", "asap-office", 15, "walk");
-graph.addEdge("reception", "openmind-makerspace", 15, "walk");
-graph.addEdge("reception", "sane-room", 15, "walk");
-graph.addEdge("reception", "autonomous-auas", 15, "walk");
-graph.addEdge("asap-office", "leap-ksum", 10, "walk");
-graph.addEdge("openmind-makerspace", "emergency-exit", 10, "walk");
-graph.addEdge("emergency-exit", "first-aid-room", 10, "walk");
-graph.addEdge("sane-room", "washroom-g", 10, "walk");
-graph.addEdge("autonomous-auas", "dining-hall", 10, "walk");
-
-// Vertical Connections
-graph.addEdge("staircase-g", "staircase-1", 20, "stairs", true);
-graph.addEdge("lift-g", "lift-1", 5, "lift", true);
-
-// 1st Floor Connections
-graph.addEdge("staircase-1", "rappin-range", 20, "walk");
-graph.addEdge("staircase-1", "link-admin-office", 10, "walk");
-graph.addEdge("lift-1", "focus-space", 5, "walk");
-graph.addEdge("rappin-range", "crown-down", 10, "walk");
-graph.addEdge("crown-down", "curiosity-weekends", 10, "walk");
-graph.addEdge("crown-down", "unknown-room", 10, "walk");
-graph.addEdge("link-admin-office", "server-room-1", 15, "walk");
-graph.addEdge("rappin-range", "foursquare-link", 20, "walk");
-graph.addEdge("foursquare-link", "noodlin-space", 10, "walk");
-graph.addEdge("server-room-1", "cranium-room", 10, "walk");
-graph.addEdge("server-room-1", "washroom-1", 10, "walk");
-
-const landmarks: Record<string, {
-    label: string;
-    label_ml?: string;
-    label_kn?: string;
-    cue: string;
-    cue_ml?: string;
-    cue_kn?: string;
-    image?: string
-}> = {
-    // Ground Floor
-    "reception": {
-        label: "Reception",
-        label_ml: "റിസപ്ഷൻ",
-        label_kn: "ಸ್ವಾಗತ ಕೌಂಟರ್",
-        cue: "the main desk area",
-        image: "https://photo-sphere-viewer.js.org/assets/sphere.jpg" // High quality indoor 360
-    },
-    "asap-office": {
-        label: "Asap Office",
-        label_ml: "അസാപ് ഓഫീസ്",
-        label_kn: "ಅಸಾಪ್ ಕಚೇರಿ",
-        cue: "the office with ASAP branding",
-        image: "https://p1.pstatp.com/origin/pgc-image/4a1d47348981434f81c7e9f3b1742721" // Modern lobby 360
-    },
-    "emergency-exit": {
-        label: "Emergency Exit",
-        label_ml: "അടിയന്തര പുറത്തേക്കുള്ള വഴി",
-        label_kn: "ತುರ್ತು ನಿರ್ಗಮನ",
-        cue: "the brightly lit exit sign"
-    },
-    "leap-ksum": {
-        label: "Leap / Kerala Startup Mission",
-        label_ml: "ലീപ്പ് / കേരള സ്റ്റാർട്ടപ്പ് മിഷൻ",
-        label_kn: "ಲೀಪ್ / ಕೇರಳ ಸ್ಟಾರ್ಟಪ್ ಮಿಷನ್",
-        cue: "the KSUM workspace"
-    },
-    "openmind-makerspace": {
-        label: "Openmind Makerspace",
-        label_ml: "ഓപ്പൺമൈൻഡ് മേക്കർസ്പേസ്",
-        label_kn: "ಓಪನ್‌ಮೈಂಡ್ ಮೇಕರ್‌ಸ್ಪೇಸ್",
-        cue: "the room with 3D printers and tools",
-        image: "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/equirectangular/park.jpg" // Sample 360
-    },
-    "sane-room": {
-        label: "The Sane Room",
-        label_ml: "സെയ്ൻ റൂം",
-        label_kn: "ಸೇನ್ ಕೊಠಡಿ",
-        cue: "the quiet zone"
-    },
-    "autonomous-auas": {
-        label: "Autonomous AUAS",
-        label_ml: "ഓട്ടോണമസ് AUAS",
-        label_kn: "ಆಟೋನಮಸ್ AUAS",
-        cue: "the AUAS research lab"
-    },
-    "washroom-g": {
-        label: "Washroom 1",
-        label_ml: "ശുചിമുറി 1",
-        label_kn: "ಶೌಚಾಲಯ 1",
-        cue: "the restroom near Sane Room"
-    },
-    "dining-hall": {
-        label: "Dining Hall",
-        label_ml: "ഡൈനിംഗ് ഹാൾ",
-        label_kn: "ಊಟದ ಹಾಲ್",
-        cue: "the large hall with tables",
-        image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000"
-    },
-    "first-aid-room": {
-        label: "First Aid Room",
-        label_ml: "പ്രഥമശുശ്രൂഷാ മുറി",
-        label_kn: "ಪ್ರಥಮ ಚಿಕಿತ್ಸಾ ಕೊಠಡಿ",
-        cue: "the room with a medical cross"
-    },
-    "staircase-g": {
-        label: "Stairs 1",
-        label_ml: "കോണിപ്പടി 1",
-        label_kn: "ಮೆಟ್ಟಿಲು 1",
-        cue: "the main stairs"
-    },
-    "lift-g": {
-        label: "Lift 1",
-        label_ml: "ലിഫ്റ്റ് 1",
-        label_kn: "ಲಿಫ್ಟ್ 1",
-        cue: "the elevator bank"
-    },
-
-    // 1st Floor
-    "rappin-range": {
-        label: "Rappin' Range",
-        label_ml: "റാപ്പിൻ റേഞ്ച്",
-        label_kn: "ರಾಪ್ಪಿನ್ ರೇಂಜ್",
-        cue: "the area with soundproofing",
-        image: "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/22ed7856b3e84325a728b7f5e3b5e4c0~tplv-k3u1fbpfcp-watermark.image" // Studio-like 360
-    },
-    "crown-down": {
-        label: "Crown Down",
-        label_ml: "ക്രൗൺ ഡൗൺ",
-        label_kn: "ಕ್ರೌನ್ ಡೌನ್",
-        cue: "the chill area"
-    },
-    "unknown-room": {
-        label: "Unknown Room",
-        label_ml: "അറിയപ്പെടാത്ത മുറി",
-        label_kn: "ತಿಳಿಯದ ಕೊಠಡಿ",
-        cue: "the unmarked door"
-    },
-    "link-admin-office": {
-        label: "Link Administrative Office",
-        label_ml: "ലിങ്ക് അഡ്മിനിസ്ട്രേറ്റീവ് ഓഫീസ്",
-        label_kn: "ಲಿಂಕ್ ಆಡಳಿತ ಕಚೇರಿ",
-        cue: "the admin hub"
-    },
-    "staircase-1": {
-        label: "Stairs 2",
-        label_ml: "കോണിപ്പടി 2",
-        label_kn: "ಮೆಟ್ಟಿಲು 2",
-        cue: "the upper stairs landing"
-    },
-    "lift-1": {
-        label: "Lift 2",
-        label_ml: "ലിഫ്റ്റ് 2",
-        label_kn: "ಲಿಫ್ಟ್ 2",
-        cue: "the upper elevator lobby"
-    },
-    "foursquare-link": {
-        label: "Foursquare Link",
-        label_ml: "ഫോർസ്ക്വയർ ലിങ്ക്",
-        label_kn: "ಫೋರ್‌ಸ್ಕ್ವೇರ್ ಲಿಂಕ್",
-        cue: "the networking space"
-    },
-    "noodlin-space": {
-        label: "Noodlin' Space",
-        label_ml: "നൂഡ്ലിൻ സ്പേസ്",
-        label_kn: "ನೂಡ್ಲಿನ್ ಸ್ಪೇಸ್",
-        cue: "the creative corner"
-    },
-    "cranium-room": {
-        label: "Cranium Room",
-        label_ml: "ക്രനിയം റൂം",
-        label_kn: "ಕ್ರೇನಿಯಂ ಕೊಠಡಿ",
-        cue: "the brainstorming room"
-    },
-    "server-room-1": {
-        label: "Server Room",
-        label_ml: "സെർവർ റൂം",
-        label_kn: "ಸರ್ವರ್ ಕೊಠಡಿ",
-        cue: "the secure room with server racks"
-    },
-    "focus-space": {
-        label: "Focus Space",
-        label_ml: "ഫോക്കസ് സ്പേസ്",
-        label_kn: "ಫೋಕಸ್ ಸ್ಪೇಸ್",
-        cue: "the individual work pods"
-    },
-    "washroom-1": {
-        label: "Washroom 2",
-        label_ml: "ശുചിമുറി 2",
-        label_kn: "ಶೌಚಾಲಯ 2",
-        cue: "the upper floor restroom"
-    },
-    "curiosity-weekends": {
-        label: "Curiosity Weekends",
-        label_ml: "ക്യൂറിയോസിറ്റി വീക്കെൻഡ്സ്",
-        label_kn: "ಕ್ಯೂರಿಯಾಸಿಟಿ ವೀಕೆಂಡ್ಸ್",
-        cue: "the event space"
-    },
-};
+interface Graph {
+    [fromNodeId: string]: GraphEdge[];
+}
 
 export interface RouteStep {
     instruction: string;
-    instruction_ml?: string;
+    instruction_ml?: string; // Optional multilingual support
     instruction_kn?: string;
     icon_type: string;
     floor?: number;
     landmarkImage?: string;
 }
 
+// Helper to convert FloorID to Number
+const floorToNumber = (f: string): number => {
+    if (f === "G") return 0;
+    if (f === "F1") return 1;
+    if (f === "F2") return 2;
+    return 0;
+};
+
+// Build the graph from buildingData
+const buildGraph = () => {
+    const graph: Graph = {};
+    const nodesMap: Record<string, BuildingNode & { floorNumber: number }> = {};
+
+    // Helper to add edge
+    const addEdge = (from: string, to: string, weight: number, instruction: string, type: string, turn?: string) => {
+        if (!graph[from]) graph[from] = [];
+        // Avoid duplicates
+        if (!graph[from].find(e => e.to === to)) {
+            graph[from].push({ to, weight, instruction, type, turn });
+        }
+    };
+
+    console.log("Building Graph...", buildingData);
+    buildingData.building.floors.forEach(floor => {
+        console.log(`Processing floor ${floor.floor_id}, nodes: ${floor.nodes?.length}, edges: ${floor.edges?.length}`);
+
+        // 1. Index nodes
+        if (floor.nodes) {
+            floor.nodes.forEach(node => {
+                nodesMap[node.node_id] = {
+                    ...node,
+                    floorNumber: floorToNumber(node.floor)
+                };
+            });
+            console.log("Nodes indexed:", Object.keys(nodesMap).length);
+        } else {
+            console.error("Floor nodes missing!", floor);
+        }
+
+        // 2. Add explicit provided edges
+        if (floor.edges) {
+            floor.edges.forEach(edge => {
+                addEdge(edge.from, edge.to, edge.distance_steps, edge.instruction, edge.edge_type, edge.turn);
+                // Note: We blindly add what is in the data. If bidirectional, data should have both.
+            });
+        }
+
+        // 3. Auto-generate Junction <-> Room edges (Bidirectional)
+        floor.nodes.forEach(node => {
+            if (node.node_type !== "junction" && node.junction_id) {
+                const junction = nodesMap[node.junction_id];
+
+                if (junction) {
+                    // Room -> Junction
+                    addEdge(
+                        node.node_id,
+                        node.junction_id,
+                        5,
+                        `Exit ${node.name} and proceed to the corridor`,
+                        "corridor"
+                    ); // Room -> Junction: exiting is usually just moving straight into corridor
+
+                    // Junction -> Room
+                    addEdge(
+                        node.junction_id,
+                        node.node_id,
+                        5,
+                        `Enter ${node.name}`,
+                        "corridor"
+                    ); // Icon logic handles "destination" for this case automatically in findGraphRoute
+                }
+            }
+        });
+    });
+
+    return { graph, nodesMap };
+};
+
+// const { graph, nodesMap } = buildGraph(); // Moved inside function
+
 export const findGraphRoute = (
     fromId: string,
     toId: string,
-    customLocations?: Location[],
+    customLocations?: any[],
     customEdges?: any[]
 ) => {
-    let activeGraph = graph;
-    let activeCoords = coordinates;
-    let activeLandmarks = landmarks;
+    // Re-build graph on demand to ensure latest data (fixes HMR/Module init issues)
+    const { graph, nodesMap } = buildGraph();
 
-    if (customLocations && customEdges) {
-        activeGraph = new NavigationGraph();
-        activeCoords = {};
-        activeLandmarks = {};
+    // Dijkstra Algorithm
+    const distances: Record<string, number> = {};
+    const previous: Record<string, string | null> = {};
+    const queue: string[] = [];
 
-        customLocations.forEach(loc => {
-            if (loc.x !== undefined && loc.y !== undefined) {
-                const coords = { x: loc.x, y: loc.y, floor: loc.floor };
-                activeGraph.addNode(loc.id, coords);
-                activeCoords[loc.id] = coords;
-                activeLandmarks[loc.id] = {
-                    label: loc.name,
-                    label_ml: loc.name_ml,
-                    label_kn: loc.name_kn,
-                    cue: loc.cue || "the area",
-                    cue_ml: loc.cue_ml,
-                    cue_kn: loc.cue_kn,
-                    image: loc.image
-                };
+    // --- Shortest Path Algorithm (Dijkstra) ---
+    // This guarantees the route with the minimum total steps is selected.
+
+    // Initialize distances
+    Object.keys(nodesMap).forEach(nodeId => {
+        distances[nodeId] = Infinity;
+        previous[nodeId] = null;
+        queue.push(nodeId);
+    });
+
+    distances[fromId] = 0;
+
+    // Safety Check: Ensure start/end nodes exist
+    if (!nodesMap[fromId] || !nodesMap[toId]) {
+        console.error(`Invalid Route: Start (${fromId}) or End (${toId}) node missing.`);
+        return null;
+    }
+
+    // Helper: Find the unvisited node with the smallest distance
+    const getMinNode = () => {
+        let minNode: string | null = null;
+        let minDist = Infinity;
+        queue.forEach(node => {
+            if (distances[node] < minDist) {
+                minDist = distances[node];
+                minNode = node;
             }
         });
+        return minNode;
+    };
 
-        customEdges.forEach(edge => {
-            activeGraph.addEdge(edge.from, edge.to, edge.weight, edge.type, edge.bidirectional !== false);
+    // Main Loop
+    while (queue.length > 0) {
+        const u = getMinNode();
+
+        // If smallest distance is Infinity, remaining nodes are unreachable
+        if (u === null || distances[u] === Infinity) break;
+
+        // If we reached the target, we can stop (shortest path guaranteed)
+        if (u === toId) break;
+
+        // Remove u from unvisited queue
+        const index = queue.indexOf(u);
+        queue.splice(index, 1);
+
+        // Relax neighbors
+        const neighbors = graph[u] || [];
+        neighbors.forEach(edge => {
+            // Calculate new potential distance
+            const alt = distances[u] + edge.weight;
+
+            // If shorter path found, update it
+            if (alt < distances[edge.to]) {
+                distances[edge.to] = alt;
+                previous[edge.to] = u;
+            }
         });
     }
 
-    const pathIds = activeGraph.findPath(fromId, toId);
-    if (!pathIds || pathIds.length < 2) return null;
+    // Reconstruction
+    const path: string[] = [];
+    let u: string | null = toId;
 
+    // Check if reachable
+    if (distances[toId] === Infinity) return null;
+
+    while (u !== null) {
+        path.unshift(u);
+        u = previous[u];
+    }
+
+    if (path.length < 2) return null;
+
+    // Generate Steps
     const steps: RouteStep[] = [];
+    let totalWeight = 0;
 
-    // Initial instruction
-    const startLoc = activeLandmarks[fromId] || { label: fromId, cue: "the starting point", image: undefined };
-    steps.push({
-        instruction: `Start at ${startLoc.label}, near ${startLoc.cue}.`,
-        instruction_ml: `${startLoc.label_ml || startLoc.label}-ൽ നിന്ന് ആരംഭിക്കുക.`,
-        instruction_kn: `${startLoc.label_kn || startLoc.label} ನಿಂದ ಪ್ರಾರಂಭಿಸಿ.`,
-        icon_type: "start",
-        floor: activeCoords[fromId]?.floor,
-        landmarkImage: startLoc.image
-    });
+    for (let i = 0; i < path.length - 1; i++) {
+        const curr = path[i];
+        const next = path[i + 1];
+        const edge = graph[curr]?.find(e => e.to === next);
 
-    for (let i = 0; i < pathIds.length - 1; i++) {
-        const curr = pathIds[i];
-        const next = pathIds[i + 1];
-        const prev = i > 0 ? pathIds[i - 1] : null;
+        if (edge) {
+            totalWeight += edge.weight;
 
-        const p1 = prev ? activeCoords[prev] : null;
-        const p2 = activeCoords[curr];
-        const p3 = activeCoords[next];
+            const currNode = nodesMap[curr];
+            const nextNode = nodesMap[next];
 
-        // Safety check for missing coordinates
-        if (!p2 || !p3) {
-            console.warn(`Missing coordinates for nodes: ${curr} or ${next}`);
-            continue;
-        }
-
-        const currLandmark = activeLandmarks[curr] || { label: curr, cue: "the area", image: undefined };
-        const nextLandmark = activeLandmarks[next] || { label: next, cue: "the area", image: undefined };
-
-        let instruction = "";
-        let icon = "straight";
-        let stepImage: string | undefined = undefined;
-
-        if (p2.floor !== p3.floor) {
-            const isLift = curr.includes("lift");
-            const direction = p3.floor > p2.floor ? "up" : "down";
-
-            icon = isLift ? (direction === "up" ? "lift-up" : "lift-down") : (direction === "up" ? "stairs-up" : "stairs-down");
-            instruction = `Take the ${currLandmark.label} ${direction} to Floor ${p3.floor}. Look for ${isLift ? "the button panel" : "the handrail"}.`;
-            stepImage = currLandmark.image;
-
-        } else {
-            if (p1 && p1.floor === p2.floor) {
-                const turnDir = activeGraph.getTurnDirection(p1, p2, p3);
-
-                stepImage = currLandmark.image;
-
-                if (turnDir === "left") {
-                    icon = "left";
-                    instruction = `When you reach ${currLandmark.label}, turn left. You should see ${currLandmark.cue}.`;
-                } else if (turnDir === "right") {
-                    icon = "right";
-                    instruction = `Turn right at ${currLandmark.label}, near ${currLandmark.cue}.`;
-                } else {
-                    icon = "straight";
-                    instruction = `Continue straight past ${currLandmark.label}. Keep ${currLandmark.cue} on your side using it as a guide.`;
-                }
-            } else if (!prev) {
-                instruction = `Walk towards ${nextLandmark.label}. Look out for ${nextLandmark.cue}.`;
-                stepImage = nextLandmark.image;
-            } else {
-                instruction = `Exit the ${currLandmark.label} and proceed towards ${nextLandmark.label}.`;
-                stepImage = currLandmark.image;
+            if (!currNode) {
+                console.error(`Missing node in map: ${curr}`, { path, nodesMap });
+                continue;
             }
-        }
+            if (!nextNode) {
+                console.error(`Missing node in map: ${next}`, { path, nodesMap });
+                continue;
+            }
 
-        if (instruction) {
-            const instruction_ml = generateInstructionML(instruction, icon, currLandmark, nextLandmark, p3?.floor);
-            const instruction_kn = generateInstructionKN(instruction, icon, currLandmark, nextLandmark, p3?.floor);
+            // Determine Icon
+            let icon = "straight"; // Default
+
+            const isDiffFloor = currNode.floorNumber !== nextNode.floorNumber;
+
+            if (isDiffFloor) {
+                const isUp = nextNode.floorNumber > currNode.floorNumber;
+                if (edge.type === "lift") {
+                    icon = isUp ? "lift-up" : "lift-down";
+                } else {
+                    icon = isUp ? "stairs-up" : "stairs-down";
+                }
+            } else {
+                // Same floor logic
+                if (currNode.node_type === "junction" && nextNode.node_type !== "junction") {
+                    // Entering a room/destination
+                    icon = "destination";
+                } else if (currNode.node_type !== "junction" && nextNode.node_type === "junction") {
+                    // Exiting a room
+                    icon = "start";
+                } else {
+                    // Junction to Junction (Corridor)
+                    // Use explicit turn if available, otherwise parse string
+                    if (edge.turn) {
+                        icon = edge.turn;
+                    } else {
+                        const instr = edge.instruction.toLowerCase();
+                        if (instr.includes("left")) icon = "left";
+                        else if (instr.includes("right")) icon = "right";
+                        else icon = "straight";
+                    }
+                }
+            }
+
+            // Generate Translations (Basic placeholders/logic)
+            const instr = edge.instruction;
+            const instruction_ml = generateML(instr, icon);
+            const instruction_kn = generateKN(instr, icon);
 
             steps.push({
-                instruction,
+                instruction: instr,
                 instruction_ml,
                 instruction_kn,
                 icon_type: icon,
-                floor: p2.floor,
-                landmarkImage: stepImage
-            });
-        }
-
-        if (i + 1 === pathIds.length - 1) {
-            steps.push({
-                instruction: `You have reached ${nextLandmark.label}! It is right there by ${nextLandmark.cue}.`,
-                instruction_ml: `നിങ്ങൾ ${nextLandmark.label_ml || nextLandmark.label}-ൽ എത്തിച്ചേർന്നു!`,
-                instruction_kn: `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${nextLandmark.label_kn || nextLandmark.label} ತಲುಪಿದೆ!`,
-                icon_type: "destination",
-                floor: p3.floor,
-                landmarkImage: nextLandmark.image
+                floor: currNode.floorNumber, // Step happens at current node's floor
+                // landmarkImage: ... // TODO: Add if metadata available
             });
         }
     }
 
-    // Calculate total weight
-    let totalWeight = 0;
-    for (let i = 0; i < pathIds.length - 1; i++) {
-        const curr = pathIds[i];
-        const next = pathIds[i + 1];
-        const neighbors = activeGraph.adjacencyList[curr] || [];
-        const edge = neighbors.find(e => e.to === next);
-        if (edge) totalWeight += edge.weight;
+    // Add final arrival step
+    const finalNode = nodesMap[toId];
+    if (finalNode) {
+        steps.push({
+            instruction: `You have reached ${finalNode.name}`,
+            instruction_ml: `നിങ്ങൾ ${finalNode.name}-ൽ എത്തിച്ചേർന്നു`,
+            instruction_kn: `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${finalNode.name} ತಲುಪಿದೆ`,
+            icon_type: "destination",
+            floor: finalNode.floorNumber
+        });
     }
 
-    return { path: pathIds, steps, totalWeight };
+    return { path, steps, totalWeight };
 };
 
-function generateInstructionML(base: string, icon: string, curr: any, next: any, floor?: number) {
-    // Very basic mapping based on icon type
-    const cl = curr.label_ml || curr.label;
-    const nl = next.label_ml || next.label;
 
-    if (icon === "start") return `${cl}-ൽ നിന്ന് ആരംഭിക്കുക.`;
-    if (icon === "destination") return `നിങ്ങൾ ${nl}-ൽ എത്തിച്ചേർന്നു!`;
-    if (icon === "left") return `${cl}-ൽ നിന്ന് ഇടത്തോട്ട് തിരിയുക.`;
-    if (icon === "right") return `${cl}-ൽ നിന്ന് വലത്തോട്ട് തിരിയുക.`;
-    if (icon === "straight") return `${cl} വഴി നേരെ നടക്കുക.`;
-    if (icon.includes("stairs")) return `${floor}-ാം നിലയിലേക്ക് പടികൾ കയറുക.`;
-    if (icon.includes("lift")) return `${floor}-ാം നിലയിലേക്ക് ലിഫ്റ്റ് എടുക്കുക.`;
-    return base; // Fallback
+// Simple translation helpers (can be expanded)
+function generateML(text: string, icon: string): string {
+    if (icon === "left") return "ഇടത്തോട്ട് തിരിയുക";
+    if (icon === "right") return "വലത്തോട്ട് തിരിയുക";
+    if (icon === "straight") return "നേരെ പോകുക";
+    if (icon.includes("stairs")) return "പടികൾ കയറുക";
+    if (icon.includes("lift")) return "ലിഫ്റ്റ് ഉപയോഗിക്കുക";
+    if (text.includes("Exit")) return "പുറത്തുകടക്കുക";
+    if (text.includes("Enter")) return "പ്രവേശിക്കുക";
+    return text; // Fallback
 }
 
-function generateInstructionKN(base: string, icon: string, curr: any, next: any, floor?: number) {
-    // Very basic mapping based on icon type
-    const cl = curr.label_kn || curr.label;
-    const nl = next.label_kn || next.label;
-
-    if (icon === "start") return `${cl} ನಿಂದ ಪ್ರಾರಂಭಿಸಿ.`;
-    if (icon === "destination") return `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${nl} ತಲುಪಿದೆ!`;
-    if (icon === "left") return `${cl} ನಲ್ಲಿ ಎಡಕ್ಕೆ ತಿರುಗಿ.`;
-    if (icon === "right") return `${cl} ನಲ್ಲಿ ಬಲಕ್ಕೆ ತಿರುಗಿ.`;
-    if (icon === "straight") return `${cl} ಮೂಲಕ ನೇರವಾಗಿ ನಡೆಯಿರಿ.`;
-    if (icon.includes("stairs")) return `${floor} ನೇ ಮಹಡಿಗೆ ಮೆಟ್ಟಿಲುಗಳನ್ನು ಬಳಸಿ.`;
-    if (icon.includes("lift")) return `${floor} ನೇ ಮಹಡಿಗೆ ಲಿಫ್ಟ್ ತೆಗೆದುಕೊಳ್ಳಿ.`;
-    return base; // Fallback
+function generateKN(text: string, icon: string): string {
+    if (icon === "left") return "ಎಡಕ್ಕೆ ತಿರುಗಿ";
+    if (icon === "right") return "ಬಲಕ್ಕೆ ತಿರುಗಿ";
+    if (icon === "straight") return "ನೇರವಾಗಿ ಹೋಗಿ";
+    if (icon.includes("stairs")) return "ಮೆಟ್ಟಿಲುಗಳನ್ನು ಬಳಸಿ";
+    if (icon.includes("lift")) return "ಲಿಫ್ಟ್ ಬಳಸಿ";
+    if (text.includes("Exit")) return "ನಿರ್ಗಮಿಸಿ";
+    if (text.includes("Enter")) return "ಪ್ರವೇಶಿಸಿ";
+    return text; // Fallback
 }
