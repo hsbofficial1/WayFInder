@@ -57,7 +57,7 @@ const buildGraph = () => {
                     floorNumber: floorToNumber(node.floor)
                 };
             });
-            console.log("Nodes indexed:", Object.keys(nodesMap).length);
+            // console.log("Nodes indexed:", Object.keys(nodesMap).length);
         } else {
             console.error("Floor nodes missing!", floor);
         }
@@ -248,18 +248,55 @@ export const findGraphRoute = (
                 }
             }
 
-            // Generate Translations (Basic placeholders/logic)
+            // Generate Translations
             const instr = edge.instruction;
             const instruction_ml = generateML(instr, icon);
             const instruction_kn = generateKN(instr, icon);
+
+            // Fetch Image if available (Prefer next node as it's the destination of the step)
+            // But sometimes the current node (like a junction with a view) might have one.
+            // For now, let's use the explicit 'image' from the node if present.
+            // In locations.ts we saw images are on the node ID.
+
+            // We need to access the full node metadata which might be in buildingData or locations?
+            // in buildGraph, nodesMap stores everything from floor.nodes.
+            // The images are actually in `locations.ts` `nodeMetadata`.
+            // But `nodesMap` in graphData only has what is in `building_data.ts`.
+
+            // Wait, locations.ts IMPORTS buildingData. buildingData doesn't know about the images in locations.ts.
+            // We need to pass images or use a lookup.
+            // The findGraphRoute has optional `customLocations` but that's for dynamic stuff.
+
+            // Quick Fix: We can't easily import `locations` here due to circular dependency risk 
+            // (locations imports building_data, building_data might not import locations, but graphData imports buildingData).
+            // Actually graphData imports buildingData. locations imports buildingData.
+            // If graphData imports locations, it might be circular if locations imports something that uses graphData.
+            // locations.ts imports building_data.ts. graphData.ts imports building_data.ts.
+            // It seems safe for graphData to import locations?
+            // Let's check imports in steps 209 and 230.
+            // locations.ts -> building_data.ts
+            // graphData.ts -> building_data.ts
+            // So graphData -> locations is fine.
+
+            // HOWEVER, I don't want to add a heavy import if I can avoid it.
+            // Let's see if we can just pass the image map or if I can import `nodeMetadata` (it's not exported).
+            // `locations.ts` exports `locations` array.
+
+            // Let's rely on looking up via the `locations` array which should be passed in or imported.
+            // The `findGraphRoute` signature has `customLocations`. 
+            // In `useNavigation.ts`, it calls `findGraphRoute(from, to, locations, edges)`.
+            // So `locations` ARE passed in as the 3rd argument!
+
+            const locationMeta = customLocations?.find(l => l.id === next);
+            const landmarkImage = locationMeta?.image;
 
             steps.push({
                 instruction: instr,
                 instruction_ml,
                 instruction_kn,
                 icon_type: icon,
-                floor: currNode.floorNumber, // Step happens at current node's floor
-                // landmarkImage: ... // TODO: Add if metadata available
+                floor: currNode.floorNumber,
+                landmarkImage: landmarkImage
             });
         }
     }
