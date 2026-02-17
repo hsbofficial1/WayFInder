@@ -40,19 +40,16 @@ const floorToNumber: Record<FloorId, number> = {
 const nodeMetadata: Record<string, Partial<Location>> = {
   "Reception_G": {
     type: "entry",
-    image: "https://photo-sphere-viewer.js.org/assets/sphere.jpg",
     cue: "the main welcome desk"
   },
   "ASAP_G": {
     type: "office",
-    image: "https://p1.pstatp.com/origin/pgc-image/4a1d47348981434f81c7e9f3b1742721",
     cue: "the ASAP Branding office"
   },
   "EmergencyExit_G": { type: "utility", cue: "the corner exit sign" },
   "KSUM_G": { type: "office", cue: "the Mission Start up Kerala / Leap center" },
   "Openmind_G": {
     type: "hotspot",
-    image: "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/equirectangular/park.jpg",
     cue: "the innovation hub and makerspace"
   },
   "SaneRoom_G": { type: "room", cue: "the quiet focus zone" },
@@ -60,7 +57,6 @@ const nodeMetadata: Record<string, Partial<Location>> = {
   "Washroom1_G": { type: "utility", cue: "the nearby restroom" },
   "DiningHall_G": {
     type: "hotspot",
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000",
     cue: "the cafeteria and dining area"
   },
   "FirstAid_G": { type: "utility", cue: "the medical cross room" },
@@ -81,7 +77,7 @@ export const locations: Location[] = buildingData.building.floors.flatMap(floor 
         floor: floorToNumber[floor.floor_id],
         type: (meta.type as LocationType) || nodeTypeMap[node.node_type] || "room", // Cast to LocationType
         cue: meta.cue,
-        image: meta.image
+        image: node.image || meta.image || "/panorama.jpg"
       };
     })
 );

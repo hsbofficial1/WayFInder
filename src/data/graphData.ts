@@ -287,11 +287,8 @@ export const findGraphRoute = (
             // In `useNavigation.ts`, it calls `findGraphRoute(from, to, locations, edges)`.
             // So `locations` ARE passed in as the 3rd argument!
 
-            // Fetch Image if available
-            // User Request: "show me only the initial one which is /panorama.jpg"
-            // We are forcing the global default image for all steps.
-            // CACHE BUSTER ADDED: ?v=1 to force reload if browser cached a 404
-            const landmarkImage = "/panorama.jpg?v=" + new Date().getTime();
+            // Fetch Image if available (Prefer next node as it's the destination of the step)
+            const landmarkImage = nextNode.image || "/panorama.jpg?v=" + new Date().getTime();
 
             steps.push({
                 instruction: instr,
@@ -314,7 +311,7 @@ export const findGraphRoute = (
             instruction_kn: `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${finalNode.name} ತಲುಪಿದೆ`,
             icon_type: "destination",
             floor: finalNode.floorNumber,
-            landmarkImage: "/panorama.jpg?v=" + new Date().getTime()
+            landmarkImage: finalNode.image || "/panorama.jpg?v=" + new Date().getTime()
         });
     }
 
