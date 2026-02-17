@@ -154,7 +154,6 @@ const LocationSelector = ({
             <div className="relative">
               <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
               <Input
-                autoFocus
                 placeholder={t('search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
