@@ -29,7 +29,7 @@ export const buildingData: BuildingData = {
                     { node_id: "Lift1_G", node_type: "lift", name: "Lift 1", floor: "G", junction_id: "J4_G" },
                     { node_id: "StairsRight1_G", node_type: "stairs", name: "Stairs Right 1", floor: "G", junction_id: "J5_G" },
                     { node_id: "KSUM_G", node_type: "room", "name": "Leap / Mission Start up Kerala", floor: "G", junction_id: "J6_G", image: "/assets/panoramas/20260217_103223.jpg" },
-                    { node_id: "Openmind_G", node_type: "room", "name": "Openmind makerspace << >>", floor: "G", junction_id: "J7_G", image: "/assets/panoramas/20260217_103304.jpg" },
+                    { node_id: "Openmind_G", node_type: "room", "name": "Openmind", floor: "G", junction_id: "J7_G", image: "/assets/panoramas/20260217_103304.jpg" },
                     { node_id: "SaneRoom_G", node_type: "room", "name": "The Sane Room", floor: "G", junction_id: "J8_G", image: "/assets/panoramas/20260217_103419.jpg" },
                     { node_id: "AUAS_G", node_type: "room", "name": "Autonomous AUAS", floor: "G", junction_id: "J9_G" },
                     { node_id: "Unknown1_G", node_type: "room", "name": "Empty Room", floor: "G", junction_id: "J10_G" },
@@ -157,7 +157,7 @@ export const buildingData: BuildingData = {
                 floor_name: "First Floor",
                 nodes: [
                     // Junctions
-                    { node_id: "J13_F1", node_type: "junction", name: "Stairs 5 Junction", floor: "F1", junction_id: null },
+                    { node_id: "J13_F1", node_type: "junction", name: "Stairs 3 Junction", floor: "F1", junction_id: null },
                     { node_id: "J14_F1", node_type: "junction", name: "Crown Down Junction", floor: "F1", junction_id: null },
                     { node_id: "J15_F1", node_type: "junction", name: "Unknown 2 Junction", floor: "F1", junction_id: null },
                     { node_id: "J16_F1", node_type: "junction", name: "Admin Office Junction", floor: "F1", junction_id: null },
@@ -172,8 +172,8 @@ export const buildingData: BuildingData = {
                     { node_id: "J25_F1", node_type: "junction", name: "CW Junction", floor: "F1", junction_id: null },
 
                     // Rooms
-                    { node_id: "RuffinRange_F1", node_type: "room", name: "Ruffin Range", floor: "F1", junction_id: "J13_F1" },
-                    { node_id: "Stairs5_F1", node_type: "stairs", name: "Stairs 5", floor: "F1", junction_id: "J13_F1" },
+                    { node_id: "RuffinRange_F1", node_type: "room", name: "Rappin Range", floor: "F1", junction_id: "J13_F1" },
+                    { node_id: "Stairs5_F1", node_type: "stairs", name: "Stairs 3", floor: "F1", junction_id: "J13_F1" },
                     { node_id: "Washroom2_F1", node_type: "room", name: "Washroom 2", floor: "F1", junction_id: "J13_F1" },
                     { node_id: "CrownDown_F1", node_type: "room", name: "Crown Down", floor: "F1", junction_id: "J14_F1" },
                     { node_id: "Unknown2_F1", node_type: "room", name: "Unknown Room 2", floor: "F1", junction_id: "J15_F1" },
@@ -181,11 +181,11 @@ export const buildingData: BuildingData = {
                     { node_id: "Lift2_F1", node_type: "lift", name: "Lift 2", floor: "F1", junction_id: "J18_F1" },
                     { node_id: "Foursquare_F1", node_type: "room", name: "Foursquare", floor: "F1", junction_id: "J20_F1" },
                     { node_id: "Stairs4_F1", node_type: "stairs", name: "Stairs 4", floor: "F1", junction_id: "J20_F1" },
-                    { node_id: "NoodlingSpace_F1", node_type: "room", name: "Noodling Space", floor: "F1", junction_id: "J21_F1" },
-                    { node_id: "PremiumSpace_F1", node_type: "room", name: "Premium Space", floor: "F1", junction_id: "J22_F1" },
+                    { node_id: "NoodlingSpace_F1", node_type: "room", name: "Noodlin Space", floor: "F1", junction_id: "J21_F1" },
+                    { node_id: "PremiumSpace_F1", node_type: "room", name: "Cranium Space", floor: "F1", junction_id: "J22_F1" },
                     { node_id: "ServerRoom_F1", node_type: "room", name: "Server Room", floor: "F1", junction_id: "J23_F1" },
                     { node_id: "FocusSpace_F1", node_type: "room", name: "Focus Space", floor: "F1", junction_id: "J24_F1" },
-                    { node_id: "CW_F1", node_type: "room", name: "CW", floor: "F1", junction_id: "J25_F1" }
+                    { node_id: "CW_F1", node_type: "room", name: "Curiosity Weekends", floor: "F1", junction_id: "J25_F1" }
                 ],
                 edges: [
                     // Loop: 13-14-15-16-17-18-19-20-21-22-23-24-25-13
@@ -238,7 +238,7 @@ export const buildingData: BuildingData = {
                     { from: "J25_F1", to: "J24_F1", distance_steps: 6, instruction: "Walk straight towards Focus Space", edge_type: "corridor", turn: "straight" },
 
                     // J25 <-> J13
-                    { from: "J25_F1", to: "J13_F1", distance_steps: 6, instruction: "Walk straight to Stairs 5", edge_type: "corridor", turn: "straight" },
+                    { from: "J25_F1", to: "J13_F1", distance_steps: 6, instruction: "Walk straight to Stairs 3", edge_type: "corridor", turn: "straight" },
                     { from: "J13_F1", to: "J25_F1", distance_steps: 6, instruction: "Walk straight towards CW", edge_type: "corridor", turn: "straight" },
 
                     // Room Connections
@@ -246,7 +246,7 @@ export const buildingData: BuildingData = {
                     { from: "J13_F1", to: "RuffinRange_F1", distance_steps: 4, instruction: "Enter Ruffin Range", edge_type: "corridor", turn: "straight" },
 
                     { from: "Stairs5_F1", to: "J13_F1", distance_steps: 4, instruction: "Exit Stairs", edge_type: "stairs", turn: "straight" },
-                    { from: "J13_F1", to: "Stairs5_F1", distance_steps: 4, instruction: "Go to Stairs 5", edge_type: "stairs", turn: "straight" },
+                    { from: "J13_F1", to: "Stairs5_F1", distance_steps: 4, instruction: "Go to Stairs 3", edge_type: "stairs", turn: "straight" },
 
                     { from: "Washroom2_F1", to: "J13_F1", distance_steps: 4, instruction: "Exit Washroom", edge_type: "corridor", turn: "straight" },
                     { from: "J13_F1", to: "Washroom2_F1", distance_steps: 4, instruction: "Enter Washroom", edge_type: "corridor", turn: "straight" },

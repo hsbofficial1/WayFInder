@@ -65,17 +65,17 @@ const nodeMetadata: Record<string, Partial<Location>> = {
   "StairsLeft1_G": { type: "utility", cue: "the left side stairs" },
 
   // F1 Metadata
-  "RuffinRange_F1": { type: "room", cue: "the Ruffin Range area" },
+  "RuffinRange_F1": { type: "room", cue: "the Rappin Range area" },
   "Washroom2_F1": { type: "utility", cue: "the washroom" },
   "CrownDown_F1": { type: "room", cue: "the Crown Down room" },
   "Unknown2_F1": { type: "room", cue: "the unknown room" },
   "AdminOffice_F1": { type: "office", cue: "the Administrative Office" },
   "Foursquare_F1": { type: "hotspot", cue: "the Foursquare area" },
-  "NoodlingSpace_F1": { type: "hotspot", cue: "the Noodling Space" },
-  "PremiumSpace_F1": { type: "hotspot", cue: "the Premium Space" },
+  "NoodlingSpace_F1": { type: "hotspot", cue: "the Noodlin Space" },
+  "PremiumSpace_F1": { type: "hotspot", cue: "the Cranium Space" },
   "ServerRoom_F1": { type: "utility", cue: "the Server Room" },
   "FocusSpace_F1": { type: "hotspot", cue: "the Focus Space" },
-  "CW_F1": { type: "room", cue: "the CW room" }
+  "CW_F1": { type: "room", cue: "the Curiosity Weekends room" }
 };
 
 export const locations: Location[] = buildingData.building.floors.flatMap(floor =>
