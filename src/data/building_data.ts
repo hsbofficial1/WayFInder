@@ -145,7 +145,148 @@ export const buildingData: BuildingData = {
                     { from: "Reception_G", to: "J2_G", distance_steps: 12, instruction: "Turn Right towards ASAP Office", edge_type: "corridor", turn: "right" },
                     { from: "Reception_G", to: "J12_G", distance_steps: 14, instruction: "Turn Left towards Dining Hall", edge_type: "corridor", turn: "left" },
                     { from: "J2_G", to: "Reception_G", distance_steps: 12, instruction: "Turn Left into Reception", edge_type: "corridor", turn: "left" },
-                    { from: "J12_G", to: "Reception_G", distance_steps: 14, instruction: "Turn Right into Reception", edge_type: "corridor", turn: "right" }
+                    { from: "J12_G", to: "Reception_G", distance_steps: 14, instruction: "Turn Right into Reception", edge_type: "corridor", turn: "right" },
+
+                    // Inter-floor Connections
+                    { from: "StairsLeft1_G", to: "Stairs5_F1", distance_steps: 20, instruction: "Go up to First Floor", edge_type: "stairs", turn: "straight" },
+                    { from: "StairsRight1_G", to: "Stairs4_F1", distance_steps: 20, instruction: "Go up to First Floor", edge_type: "stairs", turn: "straight" }
+                ]
+            },
+            {
+                floor_id: "F1",
+                floor_name: "First Floor",
+                nodes: [
+                    // Junctions
+                    { node_id: "J13_F1", node_type: "junction", name: "Stairs 5 Junction", floor: "F1", junction_id: null },
+                    { node_id: "J14_F1", node_type: "junction", name: "Crown Down Junction", floor: "F1", junction_id: null },
+                    { node_id: "J15_F1", node_type: "junction", name: "Unknown 2 Junction", floor: "F1", junction_id: null },
+                    { node_id: "J16_F1", node_type: "junction", name: "Admin Office Junction", floor: "F1", junction_id: null },
+                    { node_id: "J17_F1", node_type: "junction", name: "Top Left Corner Junction", floor: "F1", junction_id: null },
+                    { node_id: "J18_F1", node_type: "junction", name: "Lift 2 Top Junction", floor: "F1", junction_id: null },
+                    { node_id: "J19_F1", node_type: "junction", name: "Lift 2 Bottom Junction", floor: "F1", junction_id: null },
+                    { node_id: "J20_F1", node_type: "junction", name: "Foursquare Corner Junction", floor: "F1", junction_id: null },
+                    { node_id: "J21_F1", node_type: "junction", name: "Noodling Space Junction", floor: "F1", junction_id: null },
+                    { node_id: "J22_F1", node_type: "junction", name: "Premium Space Junction", floor: "F1", junction_id: null },
+                    { node_id: "J23_F1", node_type: "junction", name: "Server Room Junction", floor: "F1", junction_id: null },
+                    { node_id: "J24_F1", node_type: "junction", name: "Focus Space Junction", floor: "F1", junction_id: null },
+                    { node_id: "J25_F1", node_type: "junction", name: "CW Junction", floor: "F1", junction_id: null },
+
+                    // Rooms
+                    { node_id: "RuffinRange_F1", node_type: "room", name: "Ruffin Range", floor: "F1", junction_id: "J13_F1" },
+                    { node_id: "Stairs5_F1", node_type: "stairs", name: "Stairs 5", floor: "F1", junction_id: "J13_F1" },
+                    { node_id: "Washroom2_F1", node_type: "room", name: "Washroom 2", floor: "F1", junction_id: "J13_F1" },
+                    { node_id: "CrownDown_F1", node_type: "room", name: "Crown Down", floor: "F1", junction_id: "J14_F1" },
+                    { node_id: "Unknown2_F1", node_type: "room", name: "Unknown Room 2", floor: "F1", junction_id: "J15_F1" },
+                    { node_id: "AdminOffice_F1", node_type: "room", name: "Administrative Office", floor: "F1", junction_id: "J16_F1" },
+                    { node_id: "Lift2_F1", node_type: "lift", name: "Lift 2", floor: "F1", junction_id: "J18_F1" },
+                    { node_id: "Foursquare_F1", node_type: "room", name: "Foursquare", floor: "F1", junction_id: "J20_F1" },
+                    { node_id: "Stairs4_F1", node_type: "stairs", name: "Stairs 4", floor: "F1", junction_id: "J20_F1" },
+                    { node_id: "NoodlingSpace_F1", node_type: "room", name: "Noodling Space", floor: "F1", junction_id: "J21_F1" },
+                    { node_id: "PremiumSpace_F1", node_type: "room", name: "Premium Space", floor: "F1", junction_id: "J22_F1" },
+                    { node_id: "ServerRoom_F1", node_type: "room", name: "Server Room", floor: "F1", junction_id: "J23_F1" },
+                    { node_id: "FocusSpace_F1", node_type: "room", name: "Focus Space", floor: "F1", junction_id: "J24_F1" },
+                    { node_id: "CW_F1", node_type: "room", name: "CW", floor: "F1", junction_id: "J25_F1" }
+                ],
+                edges: [
+                    // Loop: 13-14-15-16-17-18-19-20-21-22-23-24-25-13
+                    // J13 <-> J14
+                    { from: "J13_F1", to: "J14_F1", distance_steps: 8, instruction: "Walk straight towards Crown Down", edge_type: "corridor", turn: "straight" },
+                    { from: "J14_F1", to: "J13_F1", distance_steps: 8, instruction: "Walk straight towards Ruffin Range", edge_type: "corridor", turn: "straight" },
+
+                    // J14 <-> J15
+                    { from: "J14_F1", to: "J15_F1", distance_steps: 6, instruction: "Walk straight towards Unknown Room", edge_type: "corridor", turn: "straight" },
+                    { from: "J15_F1", to: "J14_F1", distance_steps: 6, instruction: "Walk straight towards Crown Down", edge_type: "corridor", turn: "straight" },
+
+                    // J15 <-> J16
+                    { from: "J15_F1", to: "J16_F1", distance_steps: 6, instruction: "Walk straight towards Admin Office", edge_type: "corridor", turn: "straight" },
+                    { from: "J16_F1", to: "J15_F1", distance_steps: 6, instruction: "Walk straight towards Unknown Room", edge_type: "corridor", turn: "straight" },
+
+                    // J16 <-> J17
+                    { from: "J16_F1", to: "J17_F1", distance_steps: 6, instruction: "Walk straight towards the corner", edge_type: "corridor", turn: "straight" },
+                    { from: "J17_F1", to: "J16_F1", distance_steps: 6, instruction: "Turn Right towards Admin Office", edge_type: "corridor", turn: "right" },
+
+                    // J17 <-> J18
+                    { from: "J17_F1", to: "J18_F1", distance_steps: 8, instruction: "Turn Left towards Lift 2", edge_type: "corridor", turn: "left" },
+                    { from: "J18_F1", to: "J17_F1", distance_steps: 8, instruction: "Walk straight towards the corner", edge_type: "corridor", turn: "straight" },
+
+                    // J18 <-> J19
+                    { from: "J18_F1", to: "J19_F1", distance_steps: 4, instruction: "Walk straight along Lift area", edge_type: "corridor", turn: "straight" },
+                    { from: "J19_F1", to: "J18_F1", distance_steps: 4, instruction: "Walk straight along Lift area", edge_type: "corridor", turn: "straight" },
+
+                    // J19 <-> J20
+                    { from: "J19_F1", to: "J20_F1", distance_steps: 8, instruction: "Walk straight towards Foursquare", edge_type: "corridor", turn: "straight" },
+                    { from: "J20_F1", to: "J19_F1", distance_steps: 8, instruction: "Walk straight towards Lift 2", edge_type: "corridor", turn: "straight" },
+
+                    // J20 <-> J21
+                    { from: "J20_F1", to: "J21_F1", distance_steps: 8, instruction: "Turn Left towards Noodling Space", edge_type: "corridor", turn: "left" },
+                    { from: "J21_F1", to: "J20_F1", distance_steps: 8, instruction: "Walk straight towards Foursquare", edge_type: "corridor", turn: "straight" },
+
+                    // J21 <-> J22
+                    { from: "J21_F1", to: "J22_F1", distance_steps: 8, instruction: "Walk straight towards Premium Space", edge_type: "corridor", turn: "straight" },
+                    { from: "J22_F1", to: "J21_F1", distance_steps: 8, instruction: "Walk straight towards Noodling Space", edge_type: "corridor", turn: "straight" },
+
+                    // J22 <-> J23
+                    { from: "J22_F1", to: "J23_F1", distance_steps: 8, instruction: "Follow curve to Server Room", edge_type: "corridor", turn: "left" },
+                    { from: "J23_F1", to: "J22_F1", distance_steps: 8, instruction: "Follow curve to Premium Space", edge_type: "corridor", turn: "right" },
+
+                    // J23 <-> J24
+                    { from: "J23_F1", to: "J24_F1", distance_steps: 6, instruction: "Walk straight towards Focus Space", edge_type: "corridor", turn: "straight" },
+                    { from: "J24_F1", to: "J23_F1", distance_steps: 6, instruction: "Walk straight towards Server Room", edge_type: "corridor", turn: "straight" },
+
+                    // J24 <-> J25
+                    { from: "J24_F1", to: "J25_F1", distance_steps: 6, instruction: "Walk straight towards CW", edge_type: "corridor", turn: "straight" },
+                    { from: "J25_F1", to: "J24_F1", distance_steps: 6, instruction: "Walk straight towards Focus Space", edge_type: "corridor", turn: "straight" },
+
+                    // J25 <-> J13
+                    { from: "J25_F1", to: "J13_F1", distance_steps: 6, instruction: "Walk straight to Stairs 5", edge_type: "corridor", turn: "straight" },
+                    { from: "J13_F1", to: "J25_F1", distance_steps: 6, instruction: "Walk straight towards CW", edge_type: "corridor", turn: "straight" },
+
+                    // Room Connections
+                    { from: "RuffinRange_F1", to: "J13_F1", distance_steps: 4, instruction: "Exit Ruffin Range", edge_type: "corridor", turn: "straight" },
+                    { from: "J13_F1", to: "RuffinRange_F1", distance_steps: 4, instruction: "Enter Ruffin Range", edge_type: "corridor", turn: "straight" },
+
+                    { from: "Stairs5_F1", to: "J13_F1", distance_steps: 4, instruction: "Exit Stairs", edge_type: "stairs", turn: "straight" },
+                    { from: "J13_F1", to: "Stairs5_F1", distance_steps: 4, instruction: "Go to Stairs 5", edge_type: "stairs", turn: "straight" },
+
+                    { from: "Washroom2_F1", to: "J13_F1", distance_steps: 4, instruction: "Exit Washroom", edge_type: "corridor", turn: "straight" },
+                    { from: "J13_F1", to: "Washroom2_F1", distance_steps: 4, instruction: "Enter Washroom", edge_type: "corridor", turn: "straight" },
+
+                    { from: "CrownDown_F1", to: "J14_F1", distance_steps: 4, instruction: "Exit Crown Down", edge_type: "corridor", turn: "straight" },
+                    { from: "J14_F1", to: "CrownDown_F1", distance_steps: 4, instruction: "Enter Crown Down", edge_type: "corridor", turn: "straight" },
+
+                    { from: "Unknown2_F1", to: "J15_F1", distance_steps: 4, instruction: "Exit Room", edge_type: "corridor", turn: "straight" },
+                    { from: "J15_F1", to: "Unknown2_F1", distance_steps: 4, instruction: "Enter Unknown Room", edge_type: "corridor", turn: "straight" },
+
+                    { from: "AdminOffice_F1", to: "J16_F1", distance_steps: 4, instruction: "Exit Admin Office", edge_type: "corridor", turn: "straight" },
+                    { from: "J16_F1", to: "AdminOffice_F1", distance_steps: 4, instruction: "Enter Admin Office", edge_type: "corridor", turn: "straight" },
+
+                    { from: "Lift2_F1", to: "J18_F1", distance_steps: 4, instruction: "Exit Lift", edge_type: "corridor", turn: "straight" },
+                    { from: "J18_F1", to: "Lift2_F1", distance_steps: 4, instruction: "Go to Lift 2", edge_type: "corridor", turn: "straight" },
+
+                    { from: "Foursquare_F1", to: "J20_F1", distance_steps: 4, instruction: "Exit Foursquare", edge_type: "corridor", turn: "straight" },
+                    { from: "J20_F1", to: "Foursquare_F1", distance_steps: 4, instruction: "Enter Foursquare", edge_type: "corridor", turn: "straight" },
+
+                    { from: "Stairs4_F1", to: "J20_F1", distance_steps: 4, instruction: "Exit Stairs", edge_type: "stairs", turn: "straight" },
+                    { from: "J20_F1", to: "Stairs4_F1", distance_steps: 4, instruction: "Go to Stairs 4", edge_type: "stairs", turn: "straight" },
+
+                    { from: "NoodlingSpace_F1", to: "J21_F1", distance_steps: 4, instruction: "Exit Noodling Space", edge_type: "corridor", turn: "straight" },
+                    { from: "J21_F1", to: "NoodlingSpace_F1", distance_steps: 4, instruction: "Enter Noodling Space", edge_type: "corridor", turn: "straight" },
+
+                    { from: "PremiumSpace_F1", to: "J22_F1", distance_steps: 4, instruction: "Exit Premium Space", edge_type: "corridor", turn: "straight" },
+                    { from: "J22_F1", to: "PremiumSpace_F1", distance_steps: 4, instruction: "Enter Premium Space", edge_type: "corridor", turn: "straight" },
+
+                    { from: "ServerRoom_F1", to: "J23_F1", distance_steps: 4, instruction: "Exit Server Room", edge_type: "corridor", turn: "straight" },
+                    { from: "J23_F1", to: "ServerRoom_F1", distance_steps: 4, instruction: "Enter Server Room", edge_type: "corridor", turn: "straight" },
+
+                    { from: "FocusSpace_F1", to: "J24_F1", distance_steps: 4, instruction: "Exit Focus Space", edge_type: "corridor", turn: "straight" },
+                    { from: "J24_F1", to: "FocusSpace_F1", distance_steps: 4, instruction: "Enter Focus Space", edge_type: "corridor", turn: "straight" },
+
+                    { from: "CW_F1", to: "J25_F1", distance_steps: 4, instruction: "Exit CW", edge_type: "corridor", turn: "straight" },
+                    { from: "J25_F1", to: "CW_F1", distance_steps: 4, instruction: "Enter CW", edge_type: "corridor", turn: "straight" },
+
+                    // Inter-floor Connections (Back to Ground)
+                    { from: "Stairs4_F1", to: "StairsRight1_G", distance_steps: 20, instruction: "Go down to Ground Floor", edge_type: "stairs", turn: "straight" },
+                    { from: "Stairs5_F1", to: "StairsLeft1_G", distance_steps: 20, instruction: "Go down to Ground Floor", edge_type: "stairs", turn: "straight" }
                 ]
             }
         ]

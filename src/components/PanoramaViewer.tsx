@@ -52,15 +52,26 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
         setStartX(e.touches[0].clientX - currentX);
     }, [currentX, isLoading, isError]);
 
+    // Auto-rotation effect
+    useEffect(() => {
+        if (isLoading || isError || isDragging) return;
+
+        const interval = setInterval(() => {
+            setCurrentX(prev => prev - 0.5); // Very slow auto-rotate
+        }, 30);
+
+        return () => clearInterval(interval);
+    }, [isLoading, isError, isDragging]);
+
     const handleMouseMove = useCallback((e: React.MouseEvent) => {
         if (!isDragging) return;
-        const x = e.clientX - startX;
+        const x = (e.clientX - startX) * 1.5; // Added sensitivity factor
         setCurrentX(x);
     }, [isDragging, startX]);
 
     const handleTouchMove = useCallback((e: React.TouchEvent) => {
         if (!isDragging) return;
-        const x = e.touches[0].clientX - startX;
+        const x = (e.touches[0].clientX - startX) * 1.5; // Added sensitivity factor
         setCurrentX(x);
     }, [isDragging, startX]);
 
@@ -116,28 +127,19 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
                 </div>
             )}
 
-            {/* The Panorama Image Layer - OPTIMIZED WITH TRANSLATE3D */}
+            {/* The Panorama Image Layer - SIMPLIFIED FOR SEAMLESS 360 LOOP */}
             {!isLoading && !isError && (
                 <div
-                    className="absolute inset-0 w-[300%] h-full flex"
+                    className="absolute inset-0 w-full h-full"
                     style={{
-                        transform: `translate3d(${currentX % containerRef.current?.offsetWidth || 0}px, 0, 0)`,
-                        willChange: 'transform'
+                        backgroundImage: `url("${imageSrc}")`,
+                        backgroundSize: `auto ${zoomLevel}%`,
+                        backgroundPosition: `${currentX}px center`,
+                        backgroundRepeat: 'repeat-x',
+                        willChange: 'background-position',
+                        transition: isDragging ? 'none' : 'background-position 0.1s linear' // Smooth auto-rotation
                     }}
-                >
-                    <div
-                        className="w-1/3 h-full bg-center bg-no-repeat bg-cover"
-                        style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }}
-                    />
-                    <div
-                        className="w-1/3 h-full bg-center bg-no-repeat bg-cover"
-                        style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }}
-                    />
-                    <div
-                        className="w-1/3 h-full bg-center bg-no-repeat bg-cover"
-                        style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }}
-                    />
-                </div>
+                />
             )}
 
             {/* Controls Overlay */}

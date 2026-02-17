@@ -94,7 +94,7 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
             if (nodes) {
                 // Map DB snake_case to Camel/Local types if needed
                 // Our schema matches BuildingNode interface except for extra fields which are optional
-                const mappedNodes = nodes.map(n => ({
+                const mappedNodes = (nodes as any[]).map(n => ({
                     ...n,
                     node_id: n.id, // DB 'id' -> App 'node_id' 
                     floor: n.floor_id, // DB 'floor_id' -> App 'floor'
@@ -104,7 +104,7 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
             }
 
             if (edgesData) {
-                const mappedEdges = edgesData.map(e => ({
+                const mappedEdges = (edgesData as any[]).map(e => ({
                     ...e,
                     from: e.from_node_id, // DB 'from_node_id' -> App 'from'
                     to: e.to_node_id, // DB 'to_node_id' -> App 'to'
@@ -122,17 +122,20 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => {
         let active = true;
         try {
-            const storedLocations = localStorage.getItem("locations_v2");
-            const storedRoutes = localStorage.getItem("routes_v4");
-            const storedFloors = localStorage.getItem("floors_v2");
+            const storedLocations = localStorage.getItem("locations_v5");
+            const storedRoutes = localStorage.getItem("routes_v7");
+            const storedFloors = localStorage.getItem("floors_v5");
             const storedFeedback = localStorage.getItem("feedback");
             const storedStats = localStorage.getItem("usageStats");
             const storedMaps = localStorage.getItem("floorMaps");
-            const storedEdges = localStorage.getItem("edges_v2");
+            const storedEdges = localStorage.getItem("edges_v5");
 
             if (active) {
                 if (storedLocations) setLocations(JSON.parse(storedLocations));
-                else setLocations(initialLocations); // Fallback to file
+                else {
+                    console.log("Loading initial locations from file:", initialLocations.length);
+                    setLocations(initialLocations); // Fallback to file
+                }
 
                 if (storedRoutes) setRoutes(JSON.parse(storedRoutes));
                 else setRoutes(initialRoutes);
@@ -167,13 +170,13 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
 
         const timer = setTimeout(() => {
             try {
-                localStorage.setItem("locations_v2", JSON.stringify(locations));
-                localStorage.setItem("routes_v4", JSON.stringify(routes));
-                localStorage.setItem("floors_v2", JSON.stringify(floors));
+                localStorage.setItem("locations_v5", JSON.stringify(locations));
+                localStorage.setItem("routes_v7", JSON.stringify(routes));
+                localStorage.setItem("floors_v5", JSON.stringify(floors));
                 localStorage.setItem("feedback", JSON.stringify(feedback));
                 localStorage.setItem("usageStats", JSON.stringify(stats));
                 localStorage.setItem("floorMaps", JSON.stringify(floorMaps));
-                localStorage.setItem("edges_v2", JSON.stringify(edges));
+                localStorage.setItem("edges_v5", JSON.stringify(edges));
             } catch (e) {
                 console.warn("Storage sync failed (likely quota exceeded or private mode):", e);
             }
@@ -337,7 +340,7 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
             instruction: edge.instruction,
             edge_type: edge.edge_type,
             turn: edge.turn
-        }).select().single();
+        } as any).select().single();
 
         if (error) throw error;
         setGraphEdges(prev => [...prev, { ...edge, id: data.id }]);

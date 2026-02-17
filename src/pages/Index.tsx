@@ -207,10 +207,10 @@ const Index = () => {
         <div className="pt-4 animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200">
           <p className="text-xs font-bold text-muted-foreground mb-4 uppercase tracking-wider pl-1">{t('quick_access')}</p>
           <div className="grid grid-cols-2 gap-3">
-            <QuickCard icon="☕" label={t('qa_cafeteria')} onClick={() => quickSelect('cafe')} />
-            <QuickCard icon="🚻" label={t('qa_restroom')} onClick={() => quickSelect('utility')} />
-            <QuickCard icon="🚪" label={t('qa_exit')} onClick={() => quickSelect('entry')} />
-            <QuickCard icon="💼" label={t('qa_office')} onClick={() => quickSelect('office')} />
+            <QuickCard icon="☕" label={t('qa_cafeteria')} onClick={() => quickSelect('DiningHall_G')} />
+            <QuickCard icon="🚻" label={t('qa_restroom')} onClick={() => quickSelect('Washroom1_G')} />
+            <QuickCard icon="🚪" label={t('qa_exit')} onClick={() => quickSelect('EmergencyExit_G')} />
+            <QuickCard icon="💼" label={t('qa_office')} onClick={() => quickSelect('ASAP_G')} />
           </div>
         </div>
 

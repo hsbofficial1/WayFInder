@@ -126,7 +126,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
             key={step.landmarkImage}
             imageSrc={step.landmarkImage}
             className="w-full h-full absolute inset-0"
-            initialZoom={110}
+            initialZoom={100}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-accent/5 relative overflow-hidden">
