@@ -41,34 +41,34 @@ const nodeMetadata: Record<string, Partial<Location>> = {
   "Reception_G": {
     type: "entry",
     image: "https://photo-sphere-viewer.js.org/assets/sphere.jpg",
-    cue: "the main desk area"
+    cue: "the main welcome desk"
   },
   "ASAP_G": {
     type: "office",
     image: "https://p1.pstatp.com/origin/pgc-image/4a1d47348981434f81c7e9f3b1742721",
-    cue: "the office with ASAP branding"
+    cue: "the ASAP Branding office"
   },
-  "EmergencyExit_G": { type: "utility", cue: "the brightly lit exit sign" },
-  "KSUM_G": { type: "office", cue: "the KSUM workspace" },
+  "EmergencyExit_G": { type: "utility", cue: "the corner exit sign" },
+  "KSUM_G": { type: "office", cue: "the Mission Start up Kerala / Leap center" },
   "Openmind_G": {
     type: "hotspot",
     image: "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/equirectangular/park.jpg",
-    cue: "the room with 3D printers and tools"
+    cue: "the innovation hub and makerspace"
   },
-  "SaneRoom_G": { type: "room", cue: "the quiet zone" },
-  "AUAS_G": { type: "office", cue: "the AUAS research lab" },
-  "Washroom1_G": { type: "utility", cue: "the restroom" },
+  "SaneRoom_G": { type: "room", cue: "the quiet focus zone" },
+  "AUAS_G": { type: "office", cue: "the Autonomous Systems lab" },
+  "Washroom1_G": { type: "utility", cue: "the nearby restroom" },
   "DiningHall_G": {
     type: "hotspot",
     image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000",
-    cue: "the large hall with tables"
+    cue: "the cafeteria and dining area"
   },
-  "FirstAid_G": { type: "utility", cue: "the room with a medical cross" },
-  "StairsRight1_G": { type: "utility", cue: "the main stairs" },
+  "FirstAid_G": { type: "utility", cue: "the medical cross room" },
+  "StairsRight1_G": { type: "utility", cue: "the right side stairs" },
   "Lift1_G": { type: "utility", cue: "the elevator bank" },
-  "StairsLeft1_G": { type: "utility", cue: "the side stairs" }
-  // Add F1 metadata if needed later
+  "StairsLeft1_G": { type: "utility", cue: "the left side stairs" }
 };
+// Add F1 metadata if needed later
 
 export const locations: Location[] = buildingData.building.floors.flatMap(floor =>
   floor.nodes

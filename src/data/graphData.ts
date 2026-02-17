@@ -288,10 +288,10 @@ export const findGraphRoute = (
             // So `locations` ARE passed in as the 3rd argument!
 
             // Fetch Image if available
-            // User Request: "Use this panorama for every place"
-            // We are setting this to a local path '/panorama.jpg'.
-            // Please save the image you provided as 'panorama.jpg' in your 'public' folder.
-            const landmarkImage = "/panorama.jpg";
+            // User Request: "show me only the initial one which is /panorama.jpg"
+            // We are forcing the global default image for all steps.
+            // CACHE BUSTER ADDED: ?v=1 to force reload if browser cached a 404
+            const landmarkImage = "/panorama.jpg?v=" + new Date().getTime();
 
             steps.push({
                 instruction: instr,
@@ -307,13 +307,14 @@ export const findGraphRoute = (
     // Add final arrival step
     const finalNode = nodesMap[toId];
     if (finalNode) {
+        // User Request: Force global panorama
         steps.push({
             instruction: `You have reached ${finalNode.name}`,
             instruction_ml: `നിങ്ങൾ ${finalNode.name}-ൽ എത്തിച്ചേർന്നു`,
             instruction_kn: `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${finalNode.name} ತಲುಪಿದೆ`,
             icon_type: "destination",
             floor: finalNode.floorNumber,
-            landmarkImage: "/panorama.jpg" // Consistent panorama
+            landmarkImage: "/panorama.jpg?v=" + new Date().getTime()
         });
     }
 

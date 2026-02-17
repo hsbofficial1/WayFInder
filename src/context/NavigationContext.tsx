@@ -4,12 +4,22 @@ import { routes as initialRoutes, Route } from "@/data/routes";
 import { floors as initialFloors, Floor } from "@/data/floors";
 import { Feedback, UsageStats } from "@/data/feedback";
 
+import { supabase } from "@/integrations/supabase/client";
+import { BuildingNode, BuildingEdge } from "@/types/building";
+
 export interface Edge {
+    id?: string;
     from: string;
     to: string;
     weight: number;
     type: "walk" | "stairs" | "lift";
     bidirectional?: boolean;
+    // Extra fields to match BuildingEdge
+    distance_steps?: number;
+    instruction?: string;
+    edge_type?: string;
+    turn?: string;
+    floor_id?: string;
 }
 
 interface NavigationContextType {
@@ -19,7 +29,9 @@ interface NavigationContextType {
     feedback: Feedback[];
     stats: UsageStats;
     floorMaps: Record<number, string>;
-    edges: Edge[];
+    graphNodes: BuildingNode[];
+    graphEdges: BuildingEdge[];
+    edges: Edge[]; // Keeping for backward compatibility if needed, but we should prefer graphEdges
     addLocation: (location: Location) => void;
     updateLocation: (id: string, location: Partial<Location>) => void;
     deleteLocation: (id: string) => void;
@@ -36,6 +48,14 @@ interface NavigationContextType {
     addFeedback: (fb: Omit<Feedback, "id" | "timestamp">) => void;
     recordNavigation: (success: boolean, toId?: string) => void;
     resetToDefaults: () => void;
+    // Graph Methods
+    fetchGraphData: () => Promise<void>;
+    addGraphNode: (node: BuildingNode) => Promise<void>;
+    updateGraphNode: (id: string, updates: Partial<BuildingNode>) => Promise<void>;
+    deleteGraphNode: (id: string) => Promise<void>;
+    addGraphEdge: (edge: BuildingEdge) => Promise<void>;
+    updateGraphEdge: (id: string, updates: Partial<BuildingEdge>) => Promise<void>;
+    deleteGraphEdge: (id: string) => Promise<void>;
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
@@ -53,7 +73,50 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
     });
     const [floorMaps, setFloorMaps] = useState<Record<number, string>>({});
     const [edges, setEdges] = useState<Edge[]>([]);
+
+    // Graph State
+    const [graphNodes, setGraphNodes] = useState<BuildingNode[]>([]);
+    const [graphEdges, setGraphEdges] = useState<BuildingEdge[]>([]);
+
     const [isInitialized, setIsInitialized] = useState(false);
+
+    // Fetch Graph Data from Supabase
+    const fetchGraphData = useCallback(async () => {
+        try {
+            // @ts-ignore
+            const { data: nodes, error: nodeErr } = await supabase.from('building_nodes').select('*');
+            if (nodeErr) throw nodeErr;
+
+            // @ts-ignore
+            const { data: edgesData, error: edgeErr } = await supabase.from('building_edges').select('*');
+            if (edgeErr) throw edgeErr;
+
+            if (nodes) {
+                // Map DB snake_case to Camel/Local types if needed
+                // Our schema matches BuildingNode interface except for extra fields which are optional
+                const mappedNodes = nodes.map(n => ({
+                    ...n,
+                    node_id: n.id, // DB 'id' -> App 'node_id' 
+                    floor: n.floor_id, // DB 'floor_id' -> App 'floor'
+                }));
+                // @ts-ignore
+                setGraphNodes(mappedNodes as BuildingNode[]);
+            }
+
+            if (edgesData) {
+                const mappedEdges = edgesData.map(e => ({
+                    ...e,
+                    from: e.from_node_id, // DB 'from_node_id' -> App 'from'
+                    to: e.to_node_id, // DB 'to_node_id' -> App 'to'
+                }));
+                // @ts-ignore
+                setGraphEdges(mappedEdges as BuildingEdge[]);
+            }
+
+        } catch (error) {
+            console.error("Error fetching graph data:", error);
+        }
+    }, []);
 
     // Initialize from LocalStorage or Defaults
     useEffect(() => {
@@ -69,7 +132,7 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
 
             if (active) {
                 if (storedLocations) setLocations(JSON.parse(storedLocations));
-                else setLocations(initialLocations);
+                else setLocations(initialLocations); // Fallback to file
 
                 if (storedRoutes) setRoutes(JSON.parse(storedRoutes));
                 else setRoutes(initialRoutes);
@@ -84,6 +147,7 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
                 else setEdges([]);
 
                 setIsInitialized(true);
+                fetchGraphData(); // Fetch from Supabase
             }
         } catch (e) {
             console.error("Failed to load state from localStorage:", e);
@@ -95,11 +159,9 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
             }
         }
         return () => { active = false; };
-    }, []);
+    }, [fetchGraphData]);
 
     // CONSOLIDATED AND DEBOUNCED PERSISTENCE
-    // This is much more efficient than 7 separate effects, 
-    // especially for "App Not Responding" prevents.
     useEffect(() => {
         if (!isInitialized) return;
 
@@ -216,6 +278,91 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
         setFloorMaps({});
         setEdges([]);
         localStorage.clear();
+        setGraphNodes([]); // Or reset to building_data.ts
+        setGraphEdges([]);
+    }, []);
+
+    // Graph Actions (Supabase)
+    const addGraphNode = useCallback(async (node: BuildingNode) => {
+        // @ts-ignore
+        const { error } = await supabase.from('building_nodes').insert({
+            id: node.node_id,
+            node_type: node.node_type,
+            name: node.name,
+            floor_id: node.floor,
+            junction_id: node.junction_id,
+            x: node.x,
+            y: node.y,
+            image: node.image,
+            cue: node.cue,
+            is_unavailable: node.is_unavailable
+        });
+        if (error) throw error;
+        setGraphNodes(prev => [...prev, node]);
+    }, []);
+
+    const updateGraphNode = useCallback(async (id: string, updates: Partial<BuildingNode>) => {
+        // @ts-ignore
+        const { error } = await supabase.from('building_nodes').update({
+            // Map updates to DB columns if necessary
+            ...(updates.name && { name: updates.name }),
+            ...(updates.node_type && { node_type: updates.node_type }),
+            ...(updates.floor && { floor_id: updates.floor }),
+            ...(updates.junction_id && { junction_id: updates.junction_id }),
+            ...(updates.x !== undefined && { x: updates.x }),
+            ...(updates.y !== undefined && { y: updates.y }),
+            ...(updates.image !== undefined && { image: updates.image }),
+            ...(updates.cue !== undefined && { cue: updates.cue }),
+            ...(updates.is_unavailable !== undefined && { is_unavailable: updates.is_unavailable }),
+        }).eq('id', id);
+
+        if (error) throw error;
+        setGraphNodes(prev => prev.map(n => n.node_id === id ? { ...n, ...updates } : n));
+    }, []);
+
+    const deleteGraphNode = useCallback(async (id: string) => {
+        // @ts-ignore
+        const { error } = await supabase.from('building_nodes').delete().eq('id', id);
+        if (error) throw error;
+        setGraphNodes(prev => prev.filter(n => n.node_id !== id));
+    }, []);
+
+    const addGraphEdge = useCallback(async (edge: BuildingEdge) => {
+        // @ts-ignore
+        const { data, error } = await supabase.from('building_edges').insert({
+            floor_id: edge.floor_id,
+            from_node_id: edge.from,
+            to_node_id: edge.to,
+            distance_steps: edge.distance_steps,
+            instruction: edge.instruction,
+            edge_type: edge.edge_type,
+            turn: edge.turn
+        }).select().single();
+
+        if (error) throw error;
+        setGraphEdges(prev => [...prev, { ...edge, id: data.id }]);
+    }, []);
+
+    const updateGraphEdge = useCallback(async (id: string, updates: Partial<BuildingEdge>) => {
+        // @ts-ignore
+        const { error } = await supabase.from('building_edges').update({
+            ...(updates.distance_steps && { distance_steps: updates.distance_steps }),
+            ...(updates.instruction && { instruction: updates.instruction }),
+            ...(updates.edge_type && { edge_type: updates.edge_type }),
+            ...(updates.turn && { turn: updates.turn }),
+            ...(updates.from && { from_node_id: updates.from }),
+            ...(updates.to && { to_node_id: updates.to }),
+        }).eq('id', id);
+
+        if (error) throw error;
+        setGraphEdges(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    }, []);
+
+    const deleteGraphEdge = useCallback(async (id: string) => {
+        // @ts-ignore
+        const { error } = await supabase.from('building_edges').delete().eq('id', id);
+        if (error) throw error;
+        setGraphEdges(prev => prev.filter(e => e.id !== id));
     }, []);
 
     const contextValue = useMemo(() => ({
@@ -241,14 +388,26 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
         edges,
         addEdge,
         updateEdge,
-        deleteEdge
+        deleteEdge,
+        graphNodes,
+        graphEdges,
+        fetchGraphData,
+        addGraphNode,
+        updateGraphNode,
+        deleteGraphNode,
+        addGraphEdge,
+        updateGraphEdge,
+        deleteGraphEdge
     }), [
         locations, routes, floors, feedback, stats, floorMaps,
         addLocation, updateLocation, deleteLocation,
         addRoute, updateRoute, deleteRoute,
         addFloor, updateFloor, deleteFloor,
         setFloorMap, addFeedback, recordNavigation, resetToDefaults,
-        edges, addEdge, updateEdge, deleteEdge
+        edges, addEdge, updateEdge, deleteEdge,
+        graphNodes, graphEdges, fetchGraphData,
+        addGraphNode, updateGraphNode, deleteGraphNode,
+        addGraphEdge, updateGraphEdge, deleteGraphEdge
     ]);
 
     return (

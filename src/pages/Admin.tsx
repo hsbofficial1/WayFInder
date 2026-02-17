@@ -12,6 +12,15 @@ import {
     SheetFooter,
 } from "@/components/ui/sheet";
 import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -34,31 +43,200 @@ import {
     ArrowRight,
     PanelLeftClose,
     PanelLeftOpen,
-    Share2, // Replaced Network with Share2
+    Share2,
     ArrowUpRight,
-    Eye
+    Eye,
+    Edit,
+    Trash
 } from "lucide-react";
 import { toast } from "sonner";
 import { LocationType } from "@/data/locations";
 import { RouteStep, IconType } from "@/data/routes";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { buildingData } from "@/data/building_data"; // Import the source of truth
+import { buildingData } from "@/data/building_data";
+import { seedGraphData } from "@/lib/graph-seed";
 
 const LOCATION_TYPES: LocationType[] = ["entry", "room", "lab", "office", "hotspot", "utility"];
+
+// Subcomponents
+const NavItem = ({ active, onClick, icon, label, count, collapsed }: any) => (
+    <button
+        onClick={onClick}
+        title={collapsed ? label : undefined}
+        className={cn(
+            "w-full flex items-center p-3 rounded-lg text-sm font-medium transition-all group",
+            active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            collapsed ? "justify-center" : "justify-between"
+        )}
+    >
+        <div className="flex items-center gap-3">
+            {React.cloneElement(icon, { size: 18, className: active ? "text-primary" : "text-muted-foreground group-hover:text-foreground" })}
+            <span className={cn("transition-all duration-300 overflow-hidden", collapsed ? "w-0 opacity-0" : "w-auto opacity-100")}>{label}</span>
+        </div>
+        {count !== undefined && !collapsed && (
+            <span className="bg-background border px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm">{count}</span>
+        )}
+    </button>
+);
+
+const StatCard = ({ title, value, icon }: any) => (
+    <div className="p-5 rounded-xl border bg-card shadow-sm flex items-start justify-between">
+        <div>
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <h3 className="text-2xl font-bold mt-1 tracking-tight">{value}</h3>
+        </div>
+        <div className="p-2 bg-muted/30 rounded-lg">{icon}</div>
+    </div>
+);
 
 export default function Admin() {
     const {
         locations, routes, floors, feedback, stats,
-        addLocation, updateLocation, addRoute, updateRoute, deleteRoute,
-        addFloor, updateFloor, deleteFloor
+        graphNodes, graphEdges, fetchGraphData,
+        addLocation, updateLocation, deleteLocation,
+        addRoute, updateRoute, deleteRoute,
+        addFloor, updateFloor, deleteFloor,
+        addGraphNode, updateGraphNode, deleteGraphNode,
+        addGraphEdge, updateGraphEdge, deleteGraphEdge
     } = useNavigationContext();
 
-    // Safety check
-    if (!buildingData || !buildingData.building) {
-        console.error("Building Data missing", buildingData);
-        return <div className="p-8 text-destructive">Error: Building Data not found. Check console.</div>;
-    }
+    // Node Dialog State
+    const [isNodeDialogOpen, setIsNodeDialogOpen] = useState(false);
+    const [editingNode, setEditingNode] = useState<any | null>(null);
+    const [nodeForm, setNodeForm] = useState<Partial<any>>({
+        node_id: "",
+        node_type: "room",
+        name: "",
+        floor: "G",
+        junction_id: "",
+        x: 0,
+        y: 0
+    });
+
+    const openAddNode = () => {
+        setEditingNode(null);
+        setNodeForm({
+            node_id: "",
+            node_type: "room",
+            name: "",
+            floor: "G",
+            junction_id: "",
+            x: 0,
+            y: 0
+        });
+        setIsNodeDialogOpen(true);
+    };
+
+    const openEditNode = (node: any) => {
+        setEditingNode(node);
+        setNodeForm({ ...node });
+        setIsNodeDialogOpen(true);
+    };
+
+    const handleSaveNode = async () => {
+        try {
+            if (!nodeForm.node_id || !nodeForm.name) {
+                toast.error("ID and Name are required");
+                return;
+            }
+
+            if (editingNode) {
+                await updateGraphNode(editingNode.node_id, nodeForm);
+                toast.success("Node updated successfully");
+            } else {
+                // Check for duplicate ID
+                if (graphNodes.some(n => n.node_id === nodeForm.node_id)) {
+                    toast.error("Node ID already exists!");
+                    return;
+                }
+                await addGraphNode(nodeForm as any);
+                toast.success("Node added successfully");
+            }
+            setIsNodeDialogOpen(false);
+        } catch (error: any) {
+            toast.error("Failed to save node: " + error.message);
+        }
+    };
+
+    const handleDeleteNode = async (id: string) => {
+        if (confirm("Are you sure you want to delete this node? This might break edges connected to it.")) {
+            try {
+                await deleteGraphNode(id);
+                toast.success("Node deleted");
+            } catch (error: any) {
+                toast.error("Failed to delete: " + error.message);
+            }
+        }
+    };
+
+    // Edge Dialog State
+    const [isEdgeDialogOpen, setIsEdgeDialogOpen] = useState(false);
+    const [editingEdge, setEditingEdge] = useState<any | null>(null);
+    const [edgeForm, setEdgeForm] = useState<Partial<any>>({
+        from: "",
+        to: "",
+        distance_steps: 5,
+        instruction: "",
+        edge_type: "corridor",
+        turn: "straight",
+        floor_id: "G"
+    });
+
+    const openAddEdge = (floorId: string) => {
+        setEditingEdge(null);
+        setEdgeForm({
+            from: "",
+            to: "",
+            distance_steps: 5,
+            instruction: "Walk straight",
+            edge_type: "corridor",
+            turn: "straight",
+            floor_id: floorId
+        });
+        setIsEdgeDialogOpen(true);
+    };
+
+    const openEditEdge = (edge: any) => {
+        setEditingEdge(edge);
+        setEdgeForm({ ...edge });
+        setIsEdgeDialogOpen(true);
+    };
+
+    const handleSaveEdge = async () => {
+        try {
+            if (!edgeForm.from || !edgeForm.to || !edgeForm.floor_id) {
+                toast.error("From, To, and Floor are required");
+                return;
+            }
+            if (edgeForm.from === edgeForm.to) {
+                toast.error("From and To nodes cannot be the same");
+                return;
+            }
+
+            if (editingEdge) {
+                await updateGraphEdge(editingEdge.id, edgeForm);
+                toast.success("Edge updated successfully");
+            } else {
+                await addGraphEdge(edgeForm as any);
+                toast.success("Edge added successfully");
+            }
+            setIsEdgeDialogOpen(false);
+        } catch (error: any) {
+            toast.error("Failed to save edge: " + error.message);
+        }
+    };
+
+    const handleDeleteEdge = async (id: string) => {
+        if (confirm("Are you sure you want to delete this edge?")) {
+            try {
+                await deleteGraphEdge(id);
+                toast.success("Edge deleted");
+            } catch (error: any) {
+                toast.error("Failed to delete edge: " + error.message);
+            }
+        }
+    };
 
     const [activeView, setActiveView] = useState<"dashboard" | "locations" | "routes" | "floors" | "feedback" | "graph">("dashboard");
     const [searchTerm, setSearchTerm] = useState("");
@@ -238,92 +416,302 @@ export default function Admin() {
 
                         {activeView === "graph" && (
                             <div className="space-y-8">
-                                <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-lg text-amber-600 text-sm">
-                                    <strong>Read-Only View:</strong> This data is loaded directly from <code>src/data/building_data.ts</code>. To edit nodes or edges, update the code file directly.
+                                <div className="flex items-center justify-between bg-muted/20 p-4 rounded-lg border">
+                                    <div className="text-sm">
+                                        {graphNodes.length > 0 ? (
+                                            <span className="flex items-center gap-2 text-emerald-600 font-medium">
+                                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                                Live Database Mode
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center gap-2 text-amber-600 font-medium">
+                                                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                                Read-Only File Mode (Sync to Edit)
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button size="sm" onClick={openAddNode}>
+                                            <Plus size={16} className="mr-2" />
+                                            Add Node
+                                        </Button>
+                                        {graphNodes.length === 0 && (
+                                            <Button size="sm" variant="default" onClick={async () => {
+                                                const success = await seedGraphData();
+                                                if (success) fetchGraphData();
+                                            }}>
+                                                Sync File to DB
+                                            </Button>
+                                        )}
+                                        <Button size="sm" variant="outline" onClick={() => fetchGraphData()}>
+                                            Refresh Data
+                                        </Button>
+                                    </div>
                                 </div>
 
-                                {buildingData.building.floors.map((floor) => (
-                                    <div key={floor.floor_id} className="space-y-4">
-                                        <h3 className="text-xl font-bold flex items-center gap-2">
-                                            <Layers size={20} className="text-primary" />
-                                            {floor.floor_name} <span className="text-muted-foreground text-sm font-normal">({floor.floor_id})</span>
-                                        </h3>
+                                {graphNodes.length > 0 ? (
+                                    // DATABASE VIEW
+                                    ['G', 'F1', 'F2'].map((fid) => {
+                                        const floorNodes = graphNodes.filter(n => n.floor === fid);
+                                        const floorEdges = graphEdges.filter(e => e.floor_id === fid);
+                                        if (floorNodes.length === 0) return null;
 
-                                        {/* Nodes Table */}
-                                        <div className="bg-card border rounded-xl overflow-hidden">
-                                            <div className="px-4 py-3 border-b bg-muted/20 font-medium text-sm flex justify-between">
-                                                <span>Nodes ({floor.nodes.length})</span>
+                                        return (
+                                            <div key={fid} className="space-y-4">
+                                                <h3 className="text-xl font-bold flex items-center gap-2">
+                                                    <Layers size={20} className="text-primary" />
+                                                    {fid === 'G' ? 'Ground Floor' : `Floor ${fid}`} <span className="text-muted-foreground text-sm font-normal">({fid})</span>
+                                                </h3>
+
+                                                {/* Nodes Table */}
+                                                <div className="bg-card border rounded-xl overflow-hidden">
+                                                    <div className="px-4 py-3 border-b bg-muted/20 font-medium text-sm flex justify-between">
+                                                        <span>Nodes ({floorNodes.length})</span>
+                                                    </div>
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-sm">
+                                                            <thead className="text-left bg-muted/10 text-muted-foreground">
+                                                                <tr>
+                                                                    <th className="p-3 font-medium">ID</th>
+                                                                    <th className="p-3 font-medium">Type</th>
+                                                                    <th className="p-3 font-medium">Name</th>
+                                                                    <th className="p-3 font-medium">Link</th>
+                                                                    <th className="p-3 font-medium text-right">Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y">
+                                                                {floorNodes.map(node => (
+                                                                    <tr key={node.node_id} className="hover:bg-muted/10 group">
+                                                                        <td className="p-3 font-mono text-xs">{node.node_id}</td>
+                                                                        <td className="p-3"><Badge variant="outline">{node.node_type}</Badge></td>
+                                                                        <td className="p-3 font-medium">{node.name}</td>
+                                                                        <td className="p-3 text-muted-foreground">{node.junction_id || '-'}</td>
+                                                                        <td className="p-3 text-right">
+                                                                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => openEditNode(node)}>
+                                                                                    <Edit size={14} />
+                                                                                </Button>
+                                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteNode(node.node_id)}>
+                                                                                    <Trash size={14} />
+                                                                                </Button>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+
+                                                {/* Edges Table */}
+                                                <div className="bg-card border rounded-xl overflow-hidden">
+                                                    <div className="px-4 py-3 border-b bg-muted/20 font-medium text-sm flex justify-between items-center">
+                                                        <span>Edges ({floorEdges.length})</span>
+                                                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => openAddEdge(fid)}>
+                                                            <Plus size={14} className="mr-1" /> Add Edge
+                                                        </Button>
+                                                    </div>
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-sm">
+                                                            <thead className="text-left bg-muted/10 text-muted-foreground">
+                                                                <tr>
+                                                                    <th className="p-3 font-medium">From</th>
+                                                                    <th className="p-3 font-medium">To</th>
+                                                                    <th className="p-3 font-medium">Steps</th>
+                                                                    <th className="p-3 font-medium">Inst.</th>
+                                                                    <th className="p-3 font-medium text-right">Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y">
+                                                                {floorEdges.map((edge: any, i) => (
+                                                                    <tr key={edge.id || i} className="hover:bg-muted/10">
+                                                                        <td className="p-3 font-mono text-xs text-muted-foreground">{edge.from}</td>
+                                                                        <td className="p-3 font-mono text-xs text-muted-foreground">{edge.to}</td>
+                                                                        <td className="p-3">{edge.distance_steps}</td>
+                                                                        <td className="p-3 italic text-muted-foreground truncate max-w-[200px]">{edge.instruction}</td>
+                                                                        <td className="p-3 text-right">
+                                                                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => openEditEdge(edge)}>
+                                                                                    <Edit size={14} />
+                                                                                </Button>
+                                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteEdge(edge.id)}>
+                                                                                    <Trash size={14} />
+                                                                                </Button>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="overflow-x-auto">
-                                                <table className="w-full text-sm">
-                                                    <thead className="text-left bg-muted/10 text-muted-foreground">
-                                                        <tr>
-                                                            <th className="p-3 font-medium">ID</th>
-                                                            <th className="p-3 font-medium">Type</th>
-                                                            <th className="p-3 font-medium">Name</th>
-                                                            <th className="p-3 font-medium">Junction Link</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y">
-                                                        {floor.nodes.map(node => (
-                                                            <tr key={node.node_id} className="hover:bg-muted/10">
-                                                                <td className="p-3 font-mono text-xs">{node.node_id}</td>
-                                                                <td className="p-3">
-                                                                    <Badge variant={node.node_type === 'junction' ? 'secondary' : 'outline'}>
-                                                                        {node.node_type}
-                                                                    </Badge>
-                                                                </td>
-                                                                <td className="p-3 font-medium">{node.name}</td>
-                                                                <td className="p-3 text-muted-foreground">{node.junction_id || '-'}</td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                        );
+                                    })
+                                ) : (
+                                    // FALLBACK TO STATIC FILE
+                                    buildingData.building.floors.map((floor) => (
+                                        <div key={floor.floor_id} className="space-y-4 opacity-75 grayscale-[0.5]">
+                                            <h3 className="text-xl font-bold flex items-center gap-2">
+                                                <Layers size={20} className="text-primary" />
+                                                {floor.floor_name} <span className="text-muted-foreground text-sm font-normal">({floor.floor_id})</span>
+                                            </h3>
+                                            <div className="p-4 border border-dashed rounded-lg text-center text-muted-foreground">
+                                                Static Data Loaded. Sync to Database to enable editing.
                                             </div>
                                         </div>
+                                    ))
+                                )}
 
-                                        {/* Edges Table */}
-                                        <div className="bg-card border rounded-xl overflow-hidden">
-                                            <div className="px-4 py-3 border-b bg-muted/20 font-medium text-sm flex justify-between">
-                                                <span>Edges ({floor.edges?.length || 0})</span>
+                                <Dialog open={isNodeDialogOpen} onOpenChange={setIsNodeDialogOpen}>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                        <DialogHeader>
+                                            <DialogTitle>{editingNode ? 'Edit Node' : 'Add New Node'}</DialogTitle>
+                                            <DialogDescription>
+                                                Fill in the details for the navigation node. ID must be unique.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="node_id" className="text-right">ID</Label>
+                                                <Input
+                                                    id="node_id"
+                                                    value={nodeForm.node_id}
+                                                    onChange={(e) => setNodeForm({ ...nodeForm, node_id: e.target.value })}
+                                                    className="col-span-3"
+                                                    disabled={!!editingNode}
+                                                />
                                             </div>
-                                            <div className="overflow-x-auto">
-                                                <table className="w-full text-sm">
-                                                    <thead className="text-left bg-muted/10 text-muted-foreground">
-                                                        <tr>
-                                                            <th className="p-3 font-medium">From</th>
-                                                            <th className="p-3 font-medium">To</th>
-                                                            <th className="p-3 font-medium">Steps</th>
-                                                            <th className="p-3 font-medium">Type</th>
-                                                            <th className="p-3 font-medium">Instruction</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y">
-                                                        {floor.edges?.map((edge, i) => (
-                                                            <tr key={i} className="hover:bg-muted/10">
-                                                                <td className="p-3 font-mono text-xs text-muted-foreground">{edge.from}</td>
-                                                                <td className="p-3 font-mono text-xs text-muted-foreground">{edge.to}</td>
-                                                                <td className="p-3">{edge.distance_steps}</td>
-                                                                <td className="p-3">
-                                                                    <div className="flex items-center gap-1.5 capitalize">
-                                                                        {edge.edge_type === 'corridor' ? <ArrowRight size={14} className="text-blue-500" /> : <ArrowUpRight size={14} className="text-orange-500" />}
-                                                                        {edge.edge_type}
-                                                                    </div>
-                                                                </td>
-                                                                <td className="p-3 italic text-muted-foreground">{edge.instruction}</td>
-                                                            </tr>
-                                                        ))}
-                                                        {(!floor.edges || floor.edges.length === 0) && (
-                                                            <tr>
-                                                                <td colSpan={5} className="p-6 text-center text-muted-foreground">No explicit edges defined. Room connections are auto-generated.</td>
-                                                            </tr>
-                                                        )}
-                                                    </tbody>
-                                                </table>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="name" className="text-right">Name</Label>
+                                                <Input
+                                                    id="name"
+                                                    value={nodeForm.name}
+                                                    onChange={(e) => setNodeForm({ ...nodeForm, name: e.target.value })}
+                                                    className="col-span-3"
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="type" className="text-right">Type</Label>
+                                                <Select
+                                                    value={nodeForm.node_type}
+                                                    onValueChange={(val) => setNodeForm({ ...nodeForm, node_type: val })}
+                                                >
+                                                    <SelectTrigger className="col-span-3">
+                                                        <SelectValue placeholder="Select type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="room">Room</SelectItem>
+                                                        <SelectItem value="junction">Junction</SelectItem>
+                                                        <SelectItem value="entry">Entry</SelectItem>
+                                                        <SelectItem value="exit">Exit</SelectItem>
+                                                        <SelectItem value="stairs">Stairs</SelectItem>
+                                                        <SelectItem value="lift">Lift</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="floor" className="text-right">Floor</Label>
+                                                <Select
+                                                    value={nodeForm.floor}
+                                                    onValueChange={(val) => setNodeForm({ ...nodeForm, floor: val })}
+                                                >
+                                                    <SelectTrigger className="col-span-3">
+                                                        <SelectValue placeholder="Select floor" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="G">Ground</SelectItem>
+                                                        <SelectItem value="F1">First Floor</SelectItem>
+                                                        <SelectItem value="F2">Second Floor</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="junction_id" className="text-right">Link to</Label>
+                                                <Input
+                                                    id="junction_id"
+                                                    placeholder="Optional (e.g. J1_G)"
+                                                    value={nodeForm.junction_id || ""}
+                                                    onChange={(e) => setNodeForm({ ...nodeForm, junction_id: e.target.value })}
+                                                    className="col-span-3"
+                                                />
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                        <DialogFooter>
+                                            <Button onClick={handleSaveNode}>Save changes</Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+
+                                <Dialog open={isEdgeDialogOpen} onOpenChange={setIsEdgeDialogOpen}>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                        <DialogHeader>
+                                            <DialogTitle>{editingEdge ? 'Edit Edge' : 'Add New Edge'}</DialogTitle>
+                                            <DialogDescription>
+                                                Define the connection between two nodes.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="from_node" className="text-right">From Node</Label>
+                                                <Select
+                                                    value={edgeForm.from}
+                                                    onValueChange={(val) => setEdgeForm({ ...edgeForm, from: val })}
+                                                    disabled={!!editingEdge}
+                                                >
+                                                    <SelectTrigger className="col-span-3">
+                                                        <SelectValue placeholder="Select start node" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {graphNodes.filter(n => n.floor === edgeForm.floor_id).map(node => (
+                                                            <SelectItem key={node.node_id} value={node.node_id}>{node.name} ({node.node_id})</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="to_node" className="text-right">To Node</Label>
+                                                <Select
+                                                    value={edgeForm.to}
+                                                    onValueChange={(val) => setEdgeForm({ ...edgeForm, to: val })}
+                                                    disabled={!!editingEdge}
+                                                >
+                                                    <SelectTrigger className="col-span-3">
+                                                        <SelectValue placeholder="Select end node" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {graphNodes.filter(n => n.floor === edgeForm.floor_id).map(node => (
+                                                            <SelectItem key={node.node_id} value={node.node_id}>{node.name} ({node.node_id})</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="distance_steps" className="text-right">Steps</Label>
+                                                <Input
+                                                    id="distance_steps"
+                                                    type="number"
+                                                    value={edgeForm.distance_steps}
+                                                    onChange={(e) => setEdgeForm({ ...edgeForm, distance_steps: parseInt(e.target.value) || 0 })}
+                                                    className="col-span-3"
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="instruction" className="text-right">Instruction</Label>
+                                                <Input
+                                                    id="instruction"
+                                                    placeholder="e.g. Go straight, turn left"
+                                                    value={edgeForm.instruction || ""}
+                                                    onChange={(e) => setEdgeForm({ ...edgeForm, instruction: e.target.value })}
+                                                    className="col-span-3"
+                                                />
+                                            </div>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button onClick={handleSaveEdge}>Save changes</Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
                             </div>
                         )}
 
@@ -445,7 +833,7 @@ export default function Admin() {
                 </ScrollArea>
             </main>
 
-            {/* EDIT SHEET logic remains the same... (omitted for brevity in prompt context but included in file write) */}
+            {/* EDIT SHEET */}
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetContent className="sm:max-w-xl p-0 overflow-y-auto w-full">
                     <SheetHeader className="px-6 py-6 border-b bg-muted/10">
@@ -480,8 +868,63 @@ export default function Admin() {
                                     </div>
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label>Panorama Image URL (Optional)</Label>
-                                    <Input value={locForm.image} onChange={e => setLocForm({ ...locForm, image: e.target.value })} placeholder="https://..." />
+                                    <Label>Panorama Image</Label>
+                                    <div className="space-y-3">
+                                        {/* Image Preview */}
+                                        {locForm.image && (
+                                            <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border/50 group">
+                                                <img src={locForm.image} alt="Panorama Preview" className="w-full h-full object-cover" />
+                                                <Button
+                                                    size="icon"
+                                                    variant="destructive"
+                                                    className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={() => setLocForm({ ...locForm, image: "" })}
+                                                >
+                                                    <Trash2 size={12} />
+                                                </Button>
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="col-span-1">
+                                                <Label htmlFor="image-upload" className="sr-only">Upload</Label>
+                                                <div className="relative">
+                                                    <Button variant="outline" className="w-full gap-2 cursor-pointer" asChild>
+                                                        <label htmlFor="image-upload">
+                                                            <ImageIcon size={14} />
+                                                            Upload from Device
+                                                        </label>
+                                                    </Button>
+                                                    <Input
+                                                        id="image-upload"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                const reader = new FileReader();
+                                                                reader.onloadend = () => {
+                                                                    setLocForm({ ...locForm, image: reader.result as string });
+                                                                };
+                                                                reader.readAsDataURL(file);
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-span-1">
+                                                <Input
+                                                    value={locForm.image}
+                                                    onChange={e => setLocForm({ ...locForm, image: e.target.value })}
+                                                    placeholder="Or paste image URL..."
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground">
+                                            Supports JPG, PNG, WEBP. For best results, use equirectangular panorama images.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -580,37 +1023,6 @@ export default function Admin() {
                     </SheetFooter>
                 </SheetContent>
             </Sheet>
-        </div>
+        </div >
     );
 }
-
-// Subcomponents
-const NavItem = ({ active, onClick, icon, label, count, collapsed }: any) => (
-    <button
-        onClick={onClick}
-        title={collapsed ? label : undefined}
-        className={cn(
-            "w-full flex items-center p-3 rounded-lg text-sm font-medium transition-all group",
-            active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            collapsed ? "justify-center" : "justify-between"
-        )}
-    >
-        <div className="flex items-center gap-3">
-            {React.cloneElement(icon, { size: 18, className: active ? "text-primary" : "text-muted-foreground group-hover:text-foreground" })}
-            <span className={cn("transition-all duration-300 overflow-hidden", collapsed ? "w-0 opacity-0" : "w-auto opacity-100")}>{label}</span>
-        </div>
-        {count !== undefined && !collapsed && (
-            <span className="bg-background border px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm">{count}</span>
-        )}
-    </button>
-);
-
-const StatCard = ({ title, value, icon }: any) => (
-    <div className="p-5 rounded-xl border bg-card shadow-sm flex items-start justify-between">
-        <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <h3 className="text-2xl font-bold mt-1 tracking-tight">{value}</h3>
-        </div>
-        <div className="p-2 bg-muted/30 rounded-lg">{icon}</div>
-    </div>
-);
