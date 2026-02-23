@@ -97,34 +97,34 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
     // Fetch Graph Data from Supabase
     const fetchGraphData = useCallback(async () => {
         try {
-            // @ts-ignore
+            // @ts-expect-error Database schema might not be fully reflected in local types
             const { data: nodes, error: nodeErr } = await supabase.from('building_nodes').select('*');
             if (nodeErr) throw nodeErr;
 
-            // @ts-ignore
+            // @ts-expect-error Database schema might not be fully reflected in local types
             const { data: edgesData, error: edgeErr } = await supabase.from('building_edges').select('*');
             if (edgeErr) throw edgeErr;
 
             if (nodes) {
                 // Map DB snake_case to Camel/Local types if needed
                 // Our schema matches BuildingNode interface except for extra fields which are optional
-                const mappedNodes = (nodes as any[]).map(n => ({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const mappedNodes: BuildingNode[] = (nodes as any[]).map(n => ({
                     ...n,
                     node_id: n.id, // DB 'id' -> App 'node_id' 
                     floor: n.floor_id, // DB 'floor_id' -> App 'floor'
-                }));
-                // @ts-ignore
-                setGraphNodes(mappedNodes as BuildingNode[]);
+                })) as BuildingNode[];
+                setGraphNodes(mappedNodes);
             }
 
             if (edgesData) {
-                const mappedEdges = (edgesData as any[]).map(e => ({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const mappedEdges: BuildingEdge[] = (edgesData as any[]).map(e => ({
                     ...e,
                     from: e.from_node_id, // DB 'from_node_id' -> App 'from'
                     to: e.to_node_id, // DB 'to_node_id' -> App 'to'
-                }));
-                // @ts-ignore
-                setGraphEdges(mappedEdges as BuildingEdge[]);
+                })) as BuildingEdge[];
+                setGraphEdges(mappedEdges);
             }
 
         } catch (error) {
@@ -301,7 +301,7 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
 
     // Graph Actions (Supabase)
     const addGraphNode = useCallback(async (node: BuildingNode) => {
-        // @ts-ignore
+        // @ts-expect-error Supabase table types
         const { error } = await supabase.from('building_nodes').insert({
             id: node.node_id,
             node_type: node.node_type,
@@ -319,7 +319,7 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     const updateGraphNode = useCallback(async (id: string, updates: Partial<BuildingNode>) => {
-        // @ts-ignore
+        // @ts-expect-error Supabase table types
         const { error } = await supabase.from('building_nodes').update({
             // Map updates to DB columns if necessary
             ...(updates.name && { name: updates.name }),
@@ -338,14 +338,14 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     const deleteGraphNode = useCallback(async (id: string) => {
-        // @ts-ignore
+        // @ts-expect-error Supabase table types
         const { error } = await supabase.from('building_nodes').delete().eq('id', id);
         if (error) throw error;
         setGraphNodes(prev => prev.filter(n => n.node_id !== id));
     }, []);
 
     const addGraphEdge = useCallback(async (edge: BuildingEdge) => {
-        // @ts-ignore
+        // @ts-expect-error Supabase table types
         const { data, error } = await supabase.from('building_edges').insert({
             floor_id: edge.floor_id,
             from_node_id: edge.from,
@@ -354,6 +354,7 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
             instruction: edge.instruction,
             edge_type: edge.edge_type,
             turn: edge.turn
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any).select().single();
 
         if (error) throw error;
@@ -361,7 +362,7 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     const updateGraphEdge = useCallback(async (id: string, updates: Partial<BuildingEdge>) => {
-        // @ts-ignore
+        // @ts-expect-error Supabase table types
         const { error } = await supabase.from('building_edges').update({
             ...(updates.distance_steps && { distance_steps: updates.distance_steps }),
             ...(updates.instruction && { instruction: updates.instruction }),
@@ -376,7 +377,7 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     const deleteGraphEdge = useCallback(async (id: string) => {
-        // @ts-ignore
+        // @ts-expect-error Supabase table types
         const { error } = await supabase.from('building_edges').delete().eq('id', id);
         if (error) throw error;
         setGraphEdges(prev => prev.filter(e => e.id !== id));

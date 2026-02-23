@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useLocations, locationTypeLabels, getFloorLabel } from "@/hooks/useNavigation";
+import { useLocations, locationTypeLabels, getFloorLabel, type Location } from "@/hooks/useNavigation";
 
 interface LocationSelectorProps {
   value: string;
@@ -42,7 +42,7 @@ const LocationSelector = ({
   const { data: locations, isLoading } = useLocations();
   const { language, t } = useLanguage();
 
-  const getName = useCallback((loc: any) => {
+  const getName = useCallback((loc: Location | null | undefined) => {
     if (!loc) return "";
     if (language === 'ml') return loc.name_ml || loc.name;
     if (language === 'kn') return loc.name_kn || loc.name;

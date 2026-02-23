@@ -50,8 +50,11 @@ import {
     Trash
 } from "lucide-react";
 import { toast } from "sonner";
-import { LocationType } from "@/data/locations";
-import { RouteStep, IconType } from "@/data/routes";
+import { LocationType, Location as NavLocation } from "@/data/locations";
+import { RouteStep, IconType, Route } from "@/data/routes";
+import { BuildingNode, BuildingEdge, NodeType, FloorId, EdgeType } from "@/types/building";
+import { Floor } from "@/context/NavigationContext";
+import { Feedback } from "@/data/feedback";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { buildingData } from "@/data/building_data";
@@ -60,7 +63,14 @@ import { seedGraphData } from "@/lib/graph-seed";
 const LOCATION_TYPES: LocationType[] = ["entry", "room", "lab", "office", "hotspot", "utility"];
 
 // Subcomponents
-const NavItem = ({ active, onClick, icon, label, count, collapsed }: any) => (
+const NavItem = ({ active, onClick, icon, label, count, collapsed }: {
+    active: boolean;
+    onClick: () => void;
+    icon: React.ReactElement;
+    label: string;
+    count?: number;
+    collapsed: boolean;
+}) => (
     <button
         onClick={onClick}
         title={collapsed ? label : undefined}
@@ -80,7 +90,7 @@ const NavItem = ({ active, onClick, icon, label, count, collapsed }: any) => (
     </button>
 );
 
-const StatCard = ({ title, value, icon }: any) => (
+const StatCard = ({ title, value, icon }: { title: string; value: string | number; icon: React.ReactNode }) => (
     <div className="p-5 rounded-xl border bg-card shadow-sm flex items-start justify-between">
         <div>
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -103,8 +113,8 @@ export default function Admin() {
 
     // Node Dialog State
     const [isNodeDialogOpen, setIsNodeDialogOpen] = useState(false);
-    const [editingNode, setEditingNode] = useState<any | null>(null);
-    const [nodeForm, setNodeForm] = useState<Partial<any>>({
+    const [editingNode, setEditingNode] = useState<BuildingNode | null>(null);
+    const [nodeForm, setNodeForm] = useState<Partial<BuildingNode>>({
         node_id: "",
         node_type: "room",
         name: "",
@@ -128,7 +138,7 @@ export default function Admin() {
         setIsNodeDialogOpen(true);
     };
 
-    const openEditNode = (node: any) => {
+    const openEditNode = (node: BuildingNode) => {
         setEditingNode(node);
         setNodeForm({ ...node });
         setIsNodeDialogOpen(true);
@@ -150,12 +160,13 @@ export default function Admin() {
                     toast.error("Node ID already exists!");
                     return;
                 }
-                await addGraphNode(nodeForm as any);
+                await addGraphNode(nodeForm as BuildingNode);
                 toast.success("Node added successfully");
             }
             setIsNodeDialogOpen(false);
-        } catch (error: any) {
-            toast.error("Failed to save node: " + error.message);
+        } catch (error: unknown) {
+            const err = error as Error;
+            toast.error("Failed to save node: " + err.message);
         }
     };
 
@@ -164,22 +175,23 @@ export default function Admin() {
             try {
                 await deleteGraphNode(id);
                 toast.success("Node deleted");
-            } catch (error: any) {
-                toast.error("Failed to delete: " + error.message);
+            } catch (error: unknown) {
+                const err = error as Error;
+                toast.error("Failed to delete: " + err.message);
             }
         }
     };
 
     // Edge Dialog State
     const [isEdgeDialogOpen, setIsEdgeDialogOpen] = useState(false);
-    const [editingEdge, setEditingEdge] = useState<any | null>(null);
-    const [edgeForm, setEdgeForm] = useState<Partial<any>>({
+    const [editingEdge, setEditingEdge] = useState<BuildingEdge | null>(null);
+    const [edgeForm, setEdgeForm] = useState<Partial<BuildingEdge>>({
         from: "",
         to: "",
         distance_steps: 5,
         instruction: "",
-        edge_type: "corridor",
-        turn: "straight",
+        edge_type: "corridor" as EdgeType,
+        turn: "straight" as "straight" | "left" | "right",
         floor_id: "G"
     });
 
@@ -197,7 +209,7 @@ export default function Admin() {
         setIsEdgeDialogOpen(true);
     };
 
-    const openEditEdge = (edge: any) => {
+    const openEditEdge = (edge: BuildingEdge) => {
         setEditingEdge(edge);
         setEdgeForm({ ...edge });
         setIsEdgeDialogOpen(true);
@@ -215,15 +227,16 @@ export default function Admin() {
             }
 
             if (editingEdge) {
-                await updateGraphEdge(editingEdge.id, edgeForm);
+                await updateGraphEdge(editingEdge.id!, edgeForm);
                 toast.success("Edge updated successfully");
             } else {
-                await addGraphEdge(edgeForm as any);
+                await addGraphEdge(edgeForm as BuildingEdge);
                 toast.success("Edge added successfully");
             }
             setIsEdgeDialogOpen(false);
-        } catch (error: any) {
-            toast.error("Failed to save edge: " + error.message);
+        } catch (error: unknown) {
+            const err = error as Error;
+            toast.error("Failed to save edge: " + err.message);
         }
     };
 
@@ -232,8 +245,9 @@ export default function Admin() {
             try {
                 await deleteGraphEdge(id);
                 toast.success("Edge deleted");
-            } catch (error: any) {
-                toast.error("Failed to delete edge: " + error.message);
+            } catch (error: unknown) {
+                const err = error as Error;
+                toast.error("Failed to delete edge: " + err.message);
             }
         }
     };
@@ -245,7 +259,7 @@ export default function Admin() {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [sheetMode, setSheetMode] = useState<"location" | "route" | "floor" | null>(null);
-    const [editingItem, setEditingItem] = useState<any>(null);
+    const [editingItem, setEditingItem] = useState<unknown | null>(null);
 
     // Form States
     const [locForm, setLocForm] = useState({ name: "", floor: "0", type: "room" as LocationType, x: "", y: "", cue: "", image: "" });
@@ -253,31 +267,34 @@ export default function Admin() {
     const [floorForm, setFloorForm] = useState({ number: "0", label: "" });
 
     // --- HANDLERS ---
-    const openSheet = (mode: "location" | "route" | "floor", item: any = null) => {
+    const openSheet = (mode: "location" | "route" | "floor", item: unknown = null) => {
         setSheetMode(mode);
         setEditingItem(item);
 
         if (mode === "location") {
+            const loc = item as NavLocation;
             setLocForm({
-                name: item?.name || "",
-                floor: item?.floor?.toString() || "0",
-                type: item?.type || "room",
-                x: item?.x?.toString() || "",
-                y: item?.y?.toString() || "",
-                cue: item?.cue || "",
-                image: item?.image || ""
+                name: loc?.name || "",
+                floor: loc?.floor?.toString() || "0",
+                type: loc?.type || "room",
+                x: loc?.x?.toString() || "",
+                y: loc?.y?.toString() || "",
+                cue: loc?.cue || "",
+                image: loc?.image || ""
             });
         } else if (mode === "route") {
+            const rt = item as Route;
             setRouteForm({
-                from: item?.from || "",
-                to: item?.to || "",
-                steps: item?.steps || [],
-                isEnabled: item?.isEnabled ?? true
+                from: rt?.from || "",
+                to: rt?.to || "",
+                steps: rt?.steps || [],
+                isEnabled: rt?.isEnabled !== false
             });
         } else if (mode === "floor") {
+            const fl = item as Floor;
             setFloorForm({
-                number: item?.number?.toString() || "0",
-                label: item?.label || ""
+                number: fl?.number?.toString() || "0",
+                label: fl?.label || ""
             });
         }
         setIsSheetOpen(true);
@@ -286,7 +303,7 @@ export default function Admin() {
     const handleSave = () => {
         if (sheetMode === "location") {
             if (!locForm.name) return;
-            const id = editingItem?.id || locForm.name.toLowerCase().replace(/[^a-z0-9]/g, "-");
+            const id = (editingItem as NavLocation)?.id || locForm.name.toLowerCase().replace(/[^a-z0-9]/g, "-");
             const data = {
                 id,
                 name: locForm.name,
@@ -297,12 +314,20 @@ export default function Admin() {
                 cue: locForm.cue,
                 image: locForm.image
             };
-            editingItem ? updateLocation(id, data) : addLocation(data);
+            if (editingItem) {
+                updateLocation(id, data);
+            } else {
+                addLocation(data);
+            }
             toast.success(`Location ${editingItem ? 'updated' : 'created'}`);
         } else if (sheetMode === "route") {
             if (!routeForm.from || !routeForm.to) return;
             const data = { ...routeForm };
-            editingItem ? updateRoute(routeForm.from, routeForm.to, data) : addRoute(data);
+            if (editingItem) {
+                updateRoute(routeForm.from, routeForm.to, data);
+            } else {
+                addRoute(data);
+            }
             toast.success(`Route ${editingItem ? 'updated' : 'created'}`);
         } else if (sheetMode === "floor") {
             const data = {
@@ -310,7 +335,11 @@ export default function Admin() {
                 number: parseInt(floorForm.number),
                 label: floorForm.label
             };
-            editingItem ? updateFloor(data.id, data) : addFloor(data);
+            if (editingItem) {
+                updateFloor(data.id, data);
+            } else {
+                addFloor(data);
+            }
             toast.success(`Floor saved`);
         }
         setIsSheetOpen(false);
@@ -523,7 +552,7 @@ export default function Admin() {
                                                                 </tr>
                                                             </thead>
                                                             <tbody className="divide-y">
-                                                                {floorEdges.map((edge: any, i) => (
+                                                                {floorEdges.map((edge: BuildingEdge, i) => (
                                                                     <tr key={edge.id || i} className="hover:bg-muted/10">
                                                                         <td className="p-3 font-mono text-xs text-muted-foreground">{edge.from}</td>
                                                                         <td className="p-3 font-mono text-xs text-muted-foreground">{edge.to}</td>
@@ -595,7 +624,7 @@ export default function Admin() {
                                                 <Label htmlFor="type" className="text-right">Type</Label>
                                                 <Select
                                                     value={nodeForm.node_type}
-                                                    onValueChange={(val) => setNodeForm({ ...nodeForm, node_type: val })}
+                                                    onValueChange={(val) => setNodeForm({ ...nodeForm, node_type: val as NodeType })}
                                                 >
                                                     <SelectTrigger className="col-span-3">
                                                         <SelectValue placeholder="Select type" />
@@ -614,7 +643,7 @@ export default function Admin() {
                                                 <Label htmlFor="floor" className="text-right">Floor</Label>
                                                 <Select
                                                     value={nodeForm.floor}
-                                                    onValueChange={(val) => setNodeForm({ ...nodeForm, floor: val })}
+                                                    onValueChange={(val) => setNodeForm({ ...nodeForm, floor: val as FloorId })}
                                                 >
                                                     <SelectTrigger className="col-span-3">
                                                         <SelectValue placeholder="Select floor" />
@@ -808,7 +837,7 @@ export default function Admin() {
                                 {feedback.length === 0 ? (
                                     <div className="text-center py-12 text-muted-foreground">No feedback received yet.</div>
                                 ) : (
-                                    feedback.map((item: any, i: number) => (
+                                    feedback.map((item: Feedback, i: number) => (
                                         <div key={i} className="p-4 bg-card border border-border/60 rounded-xl">
                                             <div className="flex justify-between items-start mb-2">
                                                 <div className="flex gap-1">

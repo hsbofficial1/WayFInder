@@ -6,7 +6,7 @@ import DirectionIcon from "@/components/DirectionIcon";
 import { getFloorLabel, type RouteWithSteps } from "@/hooks/useNavigation";
 import { useNavigationContext } from "@/context/NavigationContext";
 import { useLocations } from "@/hooks/useNavigation";
-import type { IconType } from "@/data/routes";
+import type { IconType, RouteStep } from "@/data/routes";
 import PanoramaViewer from "@/components/PanoramaViewer";
 import {
   Dialog,
@@ -35,23 +35,13 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
   const [comment, setComment] = useState("");
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Safeguard: Early exit if route is invalid
-  if (!route || !route.steps || route.steps.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center bg-background">
-        <p className="text-muted-foreground mb-4">Route information missing or invalid.</p>
-        <Button onClick={onRestart} className="rounded-xl">Go Back</Button>
-      </div>
-    );
-  }
-
-  const step = route.steps[currentStep];
-  const total = route.steps.length;
+  const step = route?.steps?.[currentStep];
+  const total = route?.steps?.length || 0;
   const isFirst = currentStep === 0;
   const isLast = currentStep === total - 1;
 
-  const fromLocation = useMemo(() => locations?.find((l) => l.id === route.from), [locations, route.from]);
-  const toLocation = useMemo(() => locations?.find((l) => l.id === route.to), [locations, route.to]);
+  const fromLocation = useMemo(() => locations?.find((l) => l.id === route?.from), [locations, route?.from]);
+  const toLocation = useMemo(() => locations?.find((l) => l.id === route?.to), [locations, route?.to]);
 
   // Scroll to top on step change - throttled
   useEffect(() => {
@@ -87,14 +77,24 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
     onRestart();
   }, [addFeedback, rating, comment, route.from, route.to, onRestart]);
 
-  const getName = (loc: any) => {
+  // Safeguard: Early exit if route is invalid - MOVED AFTER ALL HOOKS
+  if (!route || !route.steps || route.steps.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center bg-background">
+        <p className="text-muted-foreground mb-4">Route information missing or invalid.</p>
+        <Button onClick={onRestart} className="rounded-xl">Go Back</Button>
+      </div>
+    );
+  }
+
+  const getName = (loc: { name: string; name_ml?: string; name_kn?: string } | null | undefined) => {
     if (!loc) return "";
     if (language === 'ml') return loc.name_ml || loc.name;
     if (language === 'kn') return loc.name_kn || loc.name;
     return loc.name;
   };
 
-  const getInstruction = (s: any) => {
+  const getInstruction = (s: RouteStep | null | undefined) => {
     if (!s) return "";
     if (language === 'ml') return s.instruction_ml || s.instruction;
     if (language === 'kn') return s.instruction_kn || s.instruction;
@@ -135,7 +135,7 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
 
             <div className="relative z-10 flex flex-col items-center animate-in zoom-in-50 duration-500">
               <div className="p-8 rounded-[3rem] bg-card shadow-2xl shadow-primary/10 border border-white/20">
-                <DirectionIcon type={(step?.icon_type || step?.icon || "straight") as IconType} size={84} />
+                <DirectionIcon type={(step?.icon || "straight") as IconType} size={84} />
               </div>
               {step?.floor !== undefined && (
                 <div className="mt-6 px-4 py-2 bg-background/50 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-widest text-muted-foreground border border-border/50">

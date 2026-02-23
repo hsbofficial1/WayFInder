@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigationContext } from "@/context/NavigationContext";
 
 /**
@@ -8,7 +8,8 @@ import { useNavigationContext } from "@/context/NavigationContext";
  */
 export const PanoramaPreloader = () => {
     const { graphNodes } = useNavigationContext();
-    const [preloaded, setPreloaded] = useState<Set<string>>(new Set());
+    const preloadedRef = useRef<Set<string>>(new Set());
+    const [preloadedCount, setPreloadedCount] = useState(0);
 
     useEffect(() => {
         if (!graphNodes || graphNodes.length === 0) return;
@@ -23,7 +24,7 @@ export const PanoramaPreloader = () => {
         // Strategy: Preload in chunks to avoid slamming the network
         const preloadImages = async () => {
             for (const src of allImages) {
-                if (preloaded.has(src)) continue;
+                if (preloadedRef.current.has(src)) continue;
 
                 // Create a low priority image object to trigger browser cache
                 const img = new Image();
@@ -32,7 +33,8 @@ export const PanoramaPreloader = () => {
                 // We don't necessarily need to wait for each one to finish, 
                 // but we update state to track progress if needed later
                 img.onload = () => {
-                    setPreloaded(prev => new Set(prev).add(src));
+                    preloadedRef.current.add(src);
+                    setPreloadedCount(c => c + 1);
                 };
             }
         };
