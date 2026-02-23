@@ -4,7 +4,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "./ui/dropdown-menu";
 import { LANGUAGES, useLanguage } from "@/context/LanguageContext";
 import { Globe } from "lucide-react";
 

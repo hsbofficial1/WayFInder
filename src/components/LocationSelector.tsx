@@ -11,7 +11,7 @@ import {
   DrawerTrigger,
   DrawerClose,
   DrawerDescription,
-} from "@/components/ui/drawer";
+} from "./ui/drawer";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocations, locationTypeLabels, getFloorLabel, type Location } from "@/hooks/useNavigation";
