@@ -122,13 +122,13 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => {
         let active = true;
         try {
-            const storedLocations = localStorage.getItem("locations_v6");
-            const storedRoutes = localStorage.getItem("routes_v8");
-            const storedFloors = localStorage.getItem("floors_v6");
+            const storedLocations = localStorage.getItem("locations_v10");
+            const storedRoutes = localStorage.getItem("routes_v10");
+            const storedFloors = localStorage.getItem("floors_v10");
             const storedFeedback = localStorage.getItem("feedback");
             const storedStats = localStorage.getItem("usageStats");
             const storedMaps = localStorage.getItem("floorMaps");
-            const storedEdges = localStorage.getItem("edges_v6");
+            const storedEdges = localStorage.getItem("edges_v10");
 
             if (active) {
                 if (storedLocations) setLocations(JSON.parse(storedLocations));
@@ -170,13 +170,13 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
 
         const timer = setTimeout(() => {
             try {
-                localStorage.setItem("locations_v6", JSON.stringify(locations));
-                localStorage.setItem("routes_v8", JSON.stringify(routes));
-                localStorage.setItem("floors_v6", JSON.stringify(floors));
+                localStorage.setItem("locations_v10", JSON.stringify(locations));
+                localStorage.setItem("routes_v10", JSON.stringify(routes));
+                localStorage.setItem("floors_v10", JSON.stringify(floors));
                 localStorage.setItem("feedback", JSON.stringify(feedback));
                 localStorage.setItem("usageStats", JSON.stringify(stats));
                 localStorage.setItem("floorMaps", JSON.stringify(floorMaps));
-                localStorage.setItem("edges_v6", JSON.stringify(edges));
+                localStorage.setItem("edges_v10", JSON.stringify(edges));
             } catch (e) {
                 console.warn("Storage sync failed (likely quota exceeded or private mode):", e);
             }
