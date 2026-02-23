@@ -42,6 +42,10 @@ const nodeMetadata: Record<string, Partial<Location>> = {
     type: "entry",
     cue: "the main welcome desk"
   },
+  "EntranceGate_G": {
+    type: "entry",
+    cue: "the main building entry point"
+  },
   "ASAP_G": {
     type: "office",
     cue: "the ASAP Branding office"
