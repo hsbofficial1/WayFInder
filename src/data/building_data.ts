@@ -24,7 +24,7 @@ export const buildingData: BuildingData = {
 
                     // Rooms / Entries / Exits
                     { node_id: "Reception_G", node_type: "entry", name: "Reception", floor: "G", junction_id: "J1_G", image: "/assets/panoramas/Reception.jpg" },
-                    { node_id: "EntranceGate_G", node_type: "entry", name: "Entrance Gate", floor: "G", junction_id: "J1_G", image: "/assets/panoramas/Entry Gate.jpg" },
+                    { node_id: "EntryGate_G", node_type: "exit", name: "Entry Gate", floor: "G", junction_id: "J1_G", image: "/assets/panoramas/Entry Gate.jpg" },
                     { node_id: "ASAP_G", node_type: "room", name: "ASAP Office", floor: "G", junction_id: "J2_G", image: "/assets/panoramas/j2.jpg" },
                     { node_id: "EmergencyExit_G", node_type: "exit", name: "Emergency Exit", floor: "G", junction_id: "J3_G", image: "/assets/panoramas/j3.jpg" },
                     { node_id: "Lift1_G", node_type: "lift", name: "Lift 1", floor: "G", junction_id: "J4_G", image: "/assets/panoramas/j4.jpg" },

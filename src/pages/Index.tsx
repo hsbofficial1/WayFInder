@@ -209,7 +209,7 @@ const Index = () => {
           <div className="grid grid-cols-2 gap-3">
             <QuickCard icon="☕" label={t('qa_cafeteria')} onClick={() => quickSelect('DiningHall_G')} />
             <QuickCard icon="🚻" label={t('qa_restroom')} onClick={() => quickSelect('Washroom1_G')} />
-            <QuickCard icon="🚪" label={t('qa_exit')} onClick={() => quickSelect('EmergencyExit_G')} />
+            <QuickCard icon="🚪" label={t('qa_exit')} onClick={() => quickSelect('EntryGate_G')} />
             <QuickCard icon="💼" label={t('qa_office')} onClick={() => quickSelect('ASAP_G')} />
           </div>
         </div>
