@@ -8,6 +8,7 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { NavigationProvider } from "./context/NavigationContext";
 import { LanguageProvider } from "./context/LanguageContext";
+import { PanoramaPreloader } from "./components/PanoramaPreloader";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <PanoramaPreloader />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />

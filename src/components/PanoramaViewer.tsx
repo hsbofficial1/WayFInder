@@ -127,19 +127,22 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
                 </div>
             )}
 
-            {/* The Panorama Image Layer - SIMPLIFIED FOR SEAMLESS 360 LOOP */}
+            {/* The Panorama Image Layer - OPTIMIZED FOR MOBILE PERFORMANCE */}
             {!isLoading && !isError && (
                 <div
-                    className="absolute inset-0 w-full h-full"
+                    className="absolute inset-0 w-[400%] h-full flex"
                     style={{
-                        backgroundImage: `url("${imageSrc}")`,
-                        backgroundSize: `auto ${zoomLevel}%`,
-                        backgroundPosition: `${currentX}px center`,
-                        backgroundRepeat: 'repeat-x',
-                        willChange: 'background-position',
-                        transition: isDragging ? 'none' : 'background-position 0.1s linear' // Smooth auto-rotation
+                        transform: `translate3d(${currentX % containerRef.current?.offsetWidth || 0}px, 0, 0)`,
+                        willChange: 'transform',
+                        transition: isDragging ? 'none' : 'transform 0.1s linear'
                     }}
-                />
+                >
+                    {/* Triple buffer for seamless looping without jumps */}
+                    <div className="w-1/4 h-full bg-cover bg-center" style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }} />
+                    <div className="w-1/4 h-full bg-cover bg-center" style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }} />
+                    <div className="w-1/4 h-full bg-cover bg-center" style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }} />
+                    <div className="w-1/4 h-full bg-cover bg-center" style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }} />
+                </div>
             )}
 
             {/* Controls Overlay */}
