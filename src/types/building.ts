@@ -1,21 +1,34 @@
+export type IconType = "straight" | "left" | "right" | "stairs-up" | "stairs-down" | "lift-up" | "lift-down" | "destination" | "start";
+
+export interface RouteStep {
+    instruction: string;
+    instruction_ml?: string;
+    instruction_kn?: string;
+    icon: IconType;
+    floor: number;
+    landmarkImage?: string;
+}
+
 export type FloorId = "G" | "F1" | "F2";
 export type NodeType = "junction" | "room" | "stairs" | "lift" | "entry" | "exit";
 export type EdgeType = "corridor" | "stairs" | "lift";
 
 export interface BuildingNode {
-    node_id: string; // This corresponds to 'id' in DB
+    node_id: string;
     node_type: NodeType;
+    category?: "office" | "lab" | "hotspot" | "utility" | "room" | "entry";
     name: string;
-    floor: FloorId; // corresponds to 'floor_id' column
+    name_ml?: string;
+    name_kn?: string;
+    floor: FloorId;
     junction_id: string | null;
-    // Optional, for mapping back to old "Location" type
-    display_name?: string;
-    // Database fields
-    x?: number;
-    y?: number;
     image?: string;
     cue?: string;
+    cue_ml?: string;
+    cue_kn?: string;
     is_unavailable?: boolean;
+    x?: number;
+    y?: number;
 }
 
 export interface BuildingEdge {

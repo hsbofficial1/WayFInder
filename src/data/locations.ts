@@ -19,9 +19,8 @@ export interface Location {
   image?: string;
 }
 
-// Map Node Types to UI Location Types
 const nodeTypeMap: Record<NodeType, LocationType> = {
-  junction: "utility", // Should not be shown usually
+  junction: "utility",
   room: "room",
   stairs: "utility",
   lift: "utility",
@@ -35,67 +34,21 @@ const floorToNumber: Record<FloorId, number> = {
   "F2": 2
 };
 
-// Metadata for enrichment (Images, Cues, Types that are more specific than "room")
-// Mapping New Node ID -> Metadata
-const nodeMetadata: Record<string, Partial<Location>> = {
-  "Reception_G": {
-    type: "entry",
-    cue: "the main welcome desk"
-  },
-  "EntryGate_G": {
-    type: "utility",
-    cue: "the proper exit from the building"
-  },
-  "ASAP_G": {
-    type: "office",
-    cue: "the ASAP Branding office"
-  },
-  "EmergencyExit_G": { type: "utility", cue: "the corner exit sign" },
-  "KSUM_G": { type: "office", cue: "the Mission Start up Kerala / Leap center" },
-  "Openmind_G": {
-    type: "hotspot",
-    cue: "the innovation hub and makerspace"
-  },
-  "SaneRoom_G": { type: "room", cue: "the quiet focus zone" },
-  "AUAS_G": { type: "office", cue: "the Autonomous Systems lab" },
-  "Washroom1_G": { type: "utility", cue: "the nearby restroom" },
-  "DiningHall_G": {
-    type: "hotspot",
-    cue: "the cafeteria and dining area"
-  },
-  "FirstAid_G": { type: "utility", cue: "the medical cross room" },
-  "StairsRight1_G": { type: "utility", cue: "the right side stairs" },
-  "Lift1_G": { type: "utility", cue: "the elevator bank" },
-  "StairsLeft1_G": { type: "utility", cue: "the left side stairs" },
-
-  // F1 Metadata
-  "RuffinRange_F1": { type: "room", cue: "the Rappin Range area" },
-  "Washroom2_F1": { type: "utility", cue: "the washroom" },
-  "CrownDown_F1": { type: "room", cue: "the Crown Down room" },
-  "Unknown2_F1": { type: "room", cue: "the unknown room" },
-  "AdminOffice_F1": { type: "office", cue: "the Administrative Office" },
-  "Foursquare_F1": { type: "hotspot", cue: "the Foursquare area" },
-  "NoodlingSpace_F1": { type: "hotspot", cue: "the Noodlin Space" },
-  "PremiumSpace_F1": { type: "hotspot", cue: "the Cranium Space" },
-  "ServerRoom_F1": { type: "utility", cue: "the Server Room" },
-  "FocusSpace_F1": { type: "hotspot", cue: "the Focus Space" },
-  "CW_F1": { type: "room", cue: "the Curiosity Weekends room" }
-};
-
 export const locations: Location[] = buildingData.building.floors.flatMap(floor =>
   floor.nodes
     .filter(node => node.node_type !== 'junction')
-    .map(node => {
-      const meta = nodeMetadata[node.node_id] || {};
-      return {
-        id: node.node_id,
-        name: node.name,
-        floor: floorToNumber[floor.floor_id],
-        type: (meta.type as LocationType) || nodeTypeMap[node.node_type] || "room", // Cast to LocationType
-        cue: meta.cue,
-        image: node.image || meta.image || "/panorama.jpg"
-      };
-    })
+    .map(node => ({
+      id: node.node_id,
+      name: node.name,
+      name_ml: node.name_ml,
+      name_kn: node.name_kn,
+      floor: floorToNumber[floor.floor_id],
+      type: node.category || nodeTypeMap[node.node_type] || "room",
+      cue: node.cue,
+      cue_ml: node.cue_ml,
+      cue_kn: node.cue_kn,
+      image: node.image || "/panorama.jpg"
+    }))
 );
 
 export const entryPoints = locations.filter(

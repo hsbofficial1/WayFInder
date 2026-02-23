@@ -62,6 +62,9 @@ const translations: Record<Language, Record<string, string>> = {
         "qa_office": "Office",
         "offline_capable": "Offline Capable",
         "no_gps_needed": "No GPS Needed",
+        "select_start_dest_error": "Please select both a starting point and destination.",
+        "same_location_error": "You're already there! Pick a different destination.",
+        "no_route_error": "No route found between these locations.",
     },
     ml: {
         "select_start": "തുടങ്ങുന്ന സ്ഥലം തിരഞ്ഞെടുക്കുക",
@@ -108,6 +111,9 @@ const translations: Record<Language, Record<string, string>> = {
         "qa_office": "ഓഫീസ്",
         "offline_capable": "ഓഫ്‌ലൈനിൽ ഉപയോഗിക്കാം",
         "no_gps_needed": "GPS ആവശ്യമില്ല",
+        "select_start_dest_error": "തുടങ്ങുന്ന സ്ഥലവും ലക്ഷ്യസ്ഥാനവും തിരഞ്ഞെടുക്കുക.",
+        "same_location_error": "നിങ്ങൾ ഇപ്പോൾ തന്നെ അവിടെയാണ്! മറ്റൊരു സ്ഥലം തിരഞ്ഞെടുക്കുക.",
+        "no_route_error": "ഈ സ്ഥലങ്ങൾക്കിടയിൽ വഴി ലഭ്യമല്ല.",
     },
     kn: {
         "select_start": "ಪ್ರಾರಂಭ ಸ್ಥಳವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
@@ -154,6 +160,9 @@ const translations: Record<Language, Record<string, string>> = {
         "qa_office": "ಕಚೇರಿ",
         "offline_capable": "ಆಫ್‌ಲೈನ್ ಸಾಮರ್ಥ್ಯ",
         "no_gps_needed": "GPS ಅಗತ್ಯವಿಲ್ಲ",
+        "select_start_dest_error": "ಪ್ರಾರಂಭ ಮತ್ತು ಗಮ್ಯಸ್ಥಾನ ಎರಡನ್ನೂ ಆಯ್ಕೆಮಾಡಿ.",
+        "same_location_error": "ನೀವು ಈಗಾಗಲೇ ಅಲ್ಲಿದ್ದೀರಿ! ಬೇರೆ ಗುರಿಯನ್ನು ಆರಿಸಿ.",
+        "no_route_error": "ಈ ಸ್ಥಳಗಳ ನಡುವೆ ಯಾವುದೇ ಮಾರ್ಗ ಕಂಡುಬಂದಿಲ್ಲ.",
     },
 };
 

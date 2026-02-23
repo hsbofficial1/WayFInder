@@ -1,13 +1,10 @@
 import { useMemo } from "react";
 import { useNavigationContext } from "@/context/NavigationContext";
 import { findGraphRoute } from "@/data/graphData";
-import { RouteStep } from "@/data/routes";
+import { RouteStep, Route } from "@/data/routes";
 
-// Re-export types
 export type { Location } from "@/data/locations";
 export type { Route, RouteStep } from "@/data/routes";
-
-export type LocationType = "entry" | "room" | "lab" | "office" | "hotspot" | "utility";
 
 export const locationTypeLabels: Record<string, string> = {
   entry: "Entry Point",
@@ -33,42 +30,32 @@ export interface RouteWithSteps {
   from: string;
   to: string;
   steps: RouteStep[];
-  duration?: number; // In seconds
+  duration?: number;
 }
 
 export function useFindRoute(from: string, to: string, enabled: boolean) {
-  const { routes, locations, edges } = useNavigationContext();
+  const { routes, locations, graphNodes, graphEdges } = useNavigationContext();
 
-  // 1. Memoize manual route selection
   const manualRoute = useMemo(() => {
     if (!enabled || !from || !to) return null;
     return routes.find(r => r.from === from && r.to === to);
   }, [enabled, from, to, routes]);
 
-  // 2. Memoize graph route calculation
   const graphRoute = useMemo(() => {
     if (!enabled || !from || !to || manualRoute) return null;
 
-    const graphResult = findGraphRoute(from, to, locations, edges);
+    // Use graphNodes and graphEdges from context which might be fetched from Supabase
+    const graphResult = findGraphRoute(from, to, graphNodes, graphEdges);
     if (!graphResult) return null;
-
-    const steps: RouteStep[] = graphResult.steps.map((step: any) => ({
-      instruction: step.instruction,
-      instruction_ml: step.instruction_ml,
-      instruction_kn: step.instruction_kn,
-      icon: step.icon_type as any,
-      floor: step.floor ?? 0,
-      landmarkImage: step.landmarkImage,
-    }));
 
     return {
       id: "local-generated-route",
       from,
       to,
-      steps,
+      steps: graphResult.steps,
       duration: graphResult.totalWeight
     };
-  }, [enabled, from, to, locations, edges, manualRoute]);
+  }, [enabled, from, to, graphNodes, graphEdges, manualRoute]);
 
   const result = useMemo(() => {
     if (manualRoute) {

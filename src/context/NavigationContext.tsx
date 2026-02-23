@@ -1,8 +1,22 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode, type FC } from "react";
 import { locations as initialLocations, Location } from "@/data/locations";
 import { routes as initialRoutes, Route } from "@/data/routes";
-import { floors as initialFloors, Floor } from "@/data/floors";
+import { buildingData } from "@/data/building_data";
 import { Feedback, UsageStats } from "@/data/feedback";
+
+const initialFloors = buildingData.building.floors.map(f => ({
+    id: f.floor_id,
+    number: f.floor_id === 'G' ? 0 : parseInt(f.floor_id.replace('F', '')),
+    label: f.floor_name
+}));
+
+export interface Floor {
+    id: string;
+    number: number;
+    label: string;
+    mapImage?: string;
+    isUnavailable?: boolean;
+}
 
 import { supabase } from "@/integrations/supabase/client";
 import { BuildingNode, BuildingEdge } from "@/types/building";

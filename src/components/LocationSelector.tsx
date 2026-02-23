@@ -23,6 +23,8 @@ interface LocationSelectorProps {
   placeholder: string;
   excludeId?: string;
   icon?: React.ReactNode;
+  className?: string;
+  containerClassName?: string;
 }
 
 const LocationSelector = ({
@@ -32,6 +34,8 @@ const LocationSelector = ({
   placeholder,
   excludeId,
   icon,
+  className,
+  containerClassName,
 }: LocationSelectorProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -100,8 +104,8 @@ const LocationSelector = ({
   }
 
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-muted-foreground ml-1">{label}</label>
+    <div className={cn("space-y-2", containerClassName)}>
+      {label && <label className="text-sm font-medium text-muted-foreground ml-1">{label}</label>}
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>
           <Button
@@ -109,9 +113,10 @@ const LocationSelector = ({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full h-20 text-left justify-start px-4 rounded-xl border-2 hover:bg-accent/5 hover:border-primary/50 transition-all",
+              "w-full text-left justify-start px-4 rounded-xl border-2 hover:bg-accent/5 hover:border-primary/50 transition-all",
               !value && "text-muted-foreground",
-              value && "border-primary/20 bg-primary/5"
+              value && "border-primary/20 bg-primary/5",
+              className
             )}
           >
             <div className="flex items-center gap-4 w-full">
