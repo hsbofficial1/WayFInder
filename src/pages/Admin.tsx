@@ -464,12 +464,12 @@ export default function Admin() {
                                             <Plus size={16} className="mr-2" />
                                             Add Node
                                         </Button>
-                                        {graphNodes.length === 0 && (
+                                        {true && (
                                             <Button size="sm" variant="default" onClick={async () => {
                                                 const success = await seedGraphData();
                                                 if (success) fetchGraphData();
                                             }}>
-                                                Sync File to DB
+                                                Force Sync File to DB
                                             </Button>
                                         )}
                                         <Button size="sm" variant="outline" onClick={() => fetchGraphData()}>
