@@ -21,28 +21,45 @@ export const PanoramaPreloader = () => {
                 .filter(Boolean) as string[]
         ));
 
-        // Strategy: Preload in chunks to avoid slamming the network
+        // Strategy: Preload sequentially with a delay to avoid blocking active navigation
         const preloadImages = async () => {
-            for (const src of allImages) {
+            // Prioritize Entry points and main junctions
+            const prioritized = allImages.sort((a, b) => {
+                const isAPrio = a.toLowerCase().includes('gate') || a.toLowerCase().includes('reception') || a.toLowerCase().includes('j1');
+                const isBPrio = b.toLowerCase().includes('gate') || b.toLowerCase().includes('reception') || b.toLowerCase().includes('j1');
+                if (isAPrio && !isBPrio) return -1;
+                if (!isAPrio && isBPrio) return 1;
+                return 0;
+            });
+
+            for (const src of prioritized) {
                 if (preloadedRef.current.has(src)) continue;
 
-                // Create a low priority image object to trigger browser cache
-                const img = new Image();
-                img.src = src;
+                try {
+                    await new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.src = src;
+                        img.onload = resolve;
+                        img.onerror = resolve; // Continue even if one fails
+                        // Cleanup after 30s timeout
+                        setTimeout(resolve, 30000);
+                    });
 
-                // We don't necessarily need to wait for each one to finish, 
-                // but we update state to track progress if needed later
-                img.onload = () => {
                     preloadedRef.current.add(src);
                     setPreloadedCount(c => c + 1);
-                };
+
+                    // Wait 2 seconds before starting next background load
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                } catch (e) {
+                    console.warn("Preload failed for", src);
+                }
             }
         };
 
-        // Delay preloading slightly so it doesn't compete with initial page load
+        // Start preloading after things settle down
         const timeout = setTimeout(() => {
             preloadImages();
-        }, 3000);
+        }, 5000);
 
         return () => clearTimeout(timeout);
     }, [graphNodes]);

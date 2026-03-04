@@ -48,8 +48,18 @@ const StepView = ({ route, onRestart, onLost }: StepViewProps) => {
     const timer = setTimeout(() => {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }, 10);
+
+    // PRELOAD NEXT STEP IMAGE
+    if (currentStep + 1 < total) {
+      const nextStep = route.steps[currentStep + 1];
+      if (nextStep.landmarkImage) {
+        const img = new Image();
+        img.src = nextStep.landmarkImage;
+      }
+    }
+
     return () => clearTimeout(timer);
-  }, [currentStep]);
+  }, [currentStep, route.steps, total]);
 
   const handleNext = useCallback(() => {
     if (typeof navigator !== "undefined" && navigator.vibrate) {
