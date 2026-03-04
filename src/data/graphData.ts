@@ -161,7 +161,7 @@ export const findGraphRoute = (
                 instruction_kn: generateKN(edge.instruction, icon),
                 icon: icon,
                 floor: currNode.floorNumber,
-                landmarkImage: nextNode.image || "/panorama.jpg"
+                landmarkImage: nextNode.image || "/panorama.webp"
             });
         }
     }
@@ -174,7 +174,7 @@ export const findGraphRoute = (
             instruction_kn: finalNode.name_kn ? `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${finalNode.name_kn} ತಲುಪಿದೆ` : `ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ${finalNode.name} ತಲುಪಿದೆ`,
             icon: "destination",
             floor: finalNode.floorNumber,
-            landmarkImage: finalNode.image || "/panorama.jpg"
+            landmarkImage: finalNode.image || "/panorama.webp"
         });
     }
 

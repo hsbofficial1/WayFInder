@@ -47,7 +47,7 @@ export const locations: Location[] = buildingData.building.floors.flatMap(floor 
       cue: node.cue,
       cue_ml: node.cue_ml,
       cue_kn: node.cue_kn,
-      image: node.image || "/panorama.jpg"
+      image: node.image || "/panorama.webp"
     }))
 );
 
