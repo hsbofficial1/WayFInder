@@ -103,7 +103,7 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
     return (
         <div
             ref={containerRef}
-            className={`relative overflow-hidden bg-muted/20 select-none touch-none group ${className}`}
+            className={`relative overflow-hidden bg-black select-none touch-none group ${className}`}
             style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -127,22 +127,19 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
                 </div>
             )}
 
-            {/* The Panorama Image Layer - OPTIMIZED FOR MOBILE PERFORMANCE */}
+            {/* The Panorama Image Layer - REFACTORED FOR SEAMLESS MOBILE PERFORMANCE */}
             {!isLoading && !isError && (
                 <div
-                    className="absolute inset-0 w-[400%] h-full flex"
+                    className="absolute inset-0 w-full h-full"
                     style={{
-                        transform: `translate3d(${(currentX % (containerRef.current?.offsetWidth || 800)) || 0}px, 0, 0)`,
-                        willChange: 'transform',
-                        transition: isDragging ? 'none' : 'transform 0.1s linear'
+                        backgroundImage: `url("${imageSrc}")`,
+                        backgroundSize: `auto ${zoomLevel}%`,
+                        backgroundPosition: `${currentX}px center`,
+                        backgroundRepeat: 'repeat-x',
+                        willChange: 'background-position',
+                        transition: isDragging ? 'none' : 'background-position 0.1s linear'
                     }}
-                >
-                    {/* Triple buffer for seamless looping without jumps */}
-                    <div className="w-1/4 h-full bg-cover bg-center" style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }} />
-                    <div className="w-1/4 h-full bg-cover bg-center" style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }} />
-                    <div className="w-1/4 h-full bg-cover bg-center" style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }} />
-                    <div className="w-1/4 h-full bg-cover bg-center" style={{ backgroundImage: `url("${imageSrc}")`, backgroundSize: `auto ${zoomLevel}%` }} />
-                </div>
+                />
             )}
 
             {/* Controls Overlay */}
