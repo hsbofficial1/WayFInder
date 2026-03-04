@@ -35,12 +35,12 @@ export const seedGraphData = async () => {
                     node_type: node.node_type,
                     name: node.name,
                     junction_id: node.junction_id || null,
-                    // Metadata from locations.ts (if any)
-                    x: meta?.x || null,
-                    y: meta?.y || null,
-                    image: meta?.image || null,
-                    cue: meta?.cue || null,
-                    is_unavailable: meta?.isUnavailable || false
+                    // Prioritize node data from building_data.ts, fallback to locations.ts
+                    x: node.x ?? meta?.x ?? null,
+                    y: node.y ?? meta?.y ?? null,
+                    image: node.image ?? meta?.image ?? null,
+                    cue: node.cue ?? meta?.cue ?? null,
+                    is_unavailable: node.is_unavailable ?? meta?.isUnavailable ?? false
                 });
             }
         }

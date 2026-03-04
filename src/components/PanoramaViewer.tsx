@@ -132,7 +132,7 @@ const PanoramaViewer = ({ imageSrc, className = "", initialZoom = 100 }: Panoram
                 <div
                     className="absolute inset-0 w-[400%] h-full flex"
                     style={{
-                        transform: `translate3d(${currentX % containerRef.current?.offsetWidth || 0}px, 0, 0)`,
+                        transform: `translate3d(${(currentX % (containerRef.current?.offsetWidth || 800)) || 0}px, 0, 0)`,
                         willChange: 'transform',
                         transition: isDragging ? 'none' : 'transform 0.1s linear'
                     }}
