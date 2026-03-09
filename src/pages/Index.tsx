@@ -23,7 +23,7 @@ const Index = () => {
   const [to, setTo] = useState("");
   const [activeRoute, setActiveRoute] = useState<RouteWithSteps | null>(null);
   const [greeting, setGreeting] = useState("greeting_hello");
-  const { locations, graphNodes, graphEdges } = useNavigationContext();
+  const { locations, graphNodes, graphEdges, recordNavigation } = useNavigationContext();
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -53,8 +53,10 @@ const Index = () => {
           duration: graphResult.totalWeight
         };
         setActiveRoute(route);
+        recordNavigation(true, to);
       } else {
         toast.error(t('no_route_error') || "No route found between these locations.");
+        recordNavigation(false, to);
       }
     } catch (err) {
       console.error("Route calculation error:", err);
