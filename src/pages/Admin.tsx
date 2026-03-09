@@ -559,7 +559,7 @@ export default function Admin() {
                                                             </thead>
                                                             <tbody className="divide-y">
                                                                 {floorEdges.map((edge: BuildingEdge, i) => (
-                                                                    <tr key={edge.id || i} className="hover:bg-muted/10">
+                                                                    <tr key={edge.id || i} className="hover:bg-muted/10 group">
                                                                         <td className="p-3 font-mono text-xs text-muted-foreground">{edge.from}</td>
                                                                         <td className="p-3 font-mono text-xs text-muted-foreground">{edge.to}</td>
                                                                         <td className="p-3">{edge.distance_steps}</td>
@@ -698,8 +698,8 @@ export default function Admin() {
                                                         <SelectValue placeholder="Select start node" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {graphNodes.filter(n => n.floor === edgeForm.floor_id).map(node => (
-                                                            <SelectItem key={node.node_id} value={node.node_id}>{node.name} ({node.node_id})</SelectItem>
+                                                        {[...graphNodes].sort((a, b) => a.floor.localeCompare(b.floor)).map(node => (
+                                                            <SelectItem key={node.node_id} value={node.node_id}>{node.name} ({node.floor})</SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
@@ -715,8 +715,8 @@ export default function Admin() {
                                                         <SelectValue placeholder="Select end node" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {graphNodes.filter(n => n.floor === edgeForm.floor_id).map(node => (
-                                                            <SelectItem key={node.node_id} value={node.node_id}>{node.name} ({node.node_id})</SelectItem>
+                                                        {[...graphNodes].sort((a, b) => a.floor.localeCompare(b.floor)).map(node => (
+                                                            <SelectItem key={node.node_id} value={node.node_id}>{node.name} ({node.floor})</SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
