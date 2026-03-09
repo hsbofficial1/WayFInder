@@ -439,7 +439,13 @@ export default function Admin() {
                                 <StatCard title="Total Navigations" value={stats.totalNavigations} icon={<RouteIcon className="text-blue-500" />} />
                                 <StatCard title="Success Rate" value={`${Math.round((stats.routesFound / (stats.totalNavigations || 1)) * 100)}%`} icon={<Badge className="bg-emerald-500 rounded-full w-2 h-2 p-0" />} />
                                 <StatCard title="Active Locations" value={locations.length} icon={<MapPin className="text-orange-500" />} />
-                                <StatCard title="Feedback Score" value="4.8" icon={<MessageSquare className="text-purple-500" />} />
+                                <StatCard
+                                    title="Feedback Score"
+                                    value={feedback.length > 0
+                                        ? (feedback.reduce((acc, curr) => acc + curr.rating, 0) / feedback.length).toFixed(1)
+                                        : "N/A"}
+                                    icon={<MessageSquare className="text-purple-500" />}
+                                />
                             </div>
                         )}
 

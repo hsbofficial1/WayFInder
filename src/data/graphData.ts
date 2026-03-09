@@ -27,7 +27,7 @@ const buildGraphFromData = (nodes: BuildingNode[], edges: BuildingEdge[]) => {
     const addEdge = (from: string, to: string, weight: number, instruction: string, type: string, turn?: string) => {
         if (!graph[from]) graph[from] = [];
         if (!graph[from].find(e => e.to === to)) {
-            graph[from].push({ to, weight, instruction, type, turn });
+            graph[from].push({ to, weight, instruction, type, turn });=
         }
     };
 
