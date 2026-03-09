@@ -75,13 +75,13 @@ const NavItem = ({ active, onClick, icon, label, count, collapsed }: {
         onClick={onClick}
         title={collapsed ? label : undefined}
         className={cn(
-            "w-full flex items-center p-3 rounded-lg text-sm font-medium transition-all group",
+            "w-full flex items-center p-3 rounded-lg text-sm font-medium transition-all group/sidebar",
             active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
             collapsed ? "justify-center" : "justify-between"
         )}
     >
         <div className="flex items-center gap-3">
-            {React.cloneElement(icon, { size: 18, className: active ? "text-primary" : "text-muted-foreground group-hover:text-foreground" })}
+            {React.cloneElement(icon, { size: 18, className: active ? "text-primary" : "text-muted-foreground group-hover/sidebar:text-foreground" })}
             <span className={cn("transition-all duration-300 overflow-hidden", collapsed ? "w-0 opacity-0" : "w-auto opacity-100")}>{label}</span>
         </div>
         {count !== undefined && !collapsed && (
@@ -516,13 +516,13 @@ export default function Admin() {
                                                             </thead>
                                                             <tbody className="divide-y">
                                                                 {floorNodes.map(node => (
-                                                                    <tr key={node.node_id} className="hover:bg-muted/10 group">
+                                                                    <tr key={node.node_id} className="hover:bg-muted/10 group/node">
                                                                         <td className="p-3 font-mono text-xs">{node.node_id}</td>
                                                                         <td className="p-3"><Badge variant="outline">{node.node_type}</Badge></td>
                                                                         <td className="p-3 font-medium">{node.name}</td>
                                                                         <td className="p-3 text-muted-foreground">{node.junction_id || '-'}</td>
                                                                         <td className="p-3 text-right">
-                                                                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            <div className="flex justify-end gap-1 opacity-0 group-hover/node:opacity-100 transition-opacity">
                                                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => openEditNode(node)}>
                                                                                     <Edit size={14} />
                                                                                 </Button>
@@ -559,13 +559,13 @@ export default function Admin() {
                                                             </thead>
                                                             <tbody className="divide-y">
                                                                 {floorEdges.map((edge: BuildingEdge, i) => (
-                                                                    <tr key={edge.id || i} className="hover:bg-muted/10 group">
+                                                                    <tr key={edge.id || i} className="hover:bg-muted/10 group/edge">
                                                                         <td className="p-3 font-mono text-xs text-muted-foreground">{edge.from}</td>
                                                                         <td className="p-3 font-mono text-xs text-muted-foreground">{edge.to}</td>
                                                                         <td className="p-3">{edge.distance_steps}</td>
                                                                         <td className="p-3 italic text-muted-foreground truncate max-w-[200px]">{edge.instruction}</td>
                                                                         <td className="p-3 text-right">
-                                                                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            <div className="flex justify-end gap-1 opacity-0 group-hover/edge:opacity-100 transition-opacity">
                                                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => openEditEdge(edge)}>
                                                                                     <Edit size={14} />
                                                                                 </Button>
@@ -781,7 +781,7 @@ export default function Admin() {
                         {activeView === "routes" && (
                             <div className="space-y-4">
                                 {routes.map((route, i) => (
-                                    <div key={i} className="flex items-center justify-between p-4 bg-card border border-border/60 rounded-xl hover:shadow-sm transition-all group">
+                                    <div key={i} className="flex items-center justify-between p-4 bg-card border border-border/60 rounded-xl hover:shadow-sm transition-all group/route">
                                         <div className="flex items-center gap-4">
                                             <div className="flex flex-col items-center gap-1">
                                                 <div className="w-2 h-2 rounded-full bg-primary" />
@@ -800,7 +800,7 @@ export default function Admin() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex gap-2 opacity-0 group-hover/route:opacity-100 transition-opacity">
                                             <Button variant="ghost" size="icon" onClick={() => openSheet("route", route)}>
                                                 <MoreHorizontal size={16} />
                                             </Button>
@@ -818,7 +818,7 @@ export default function Admin() {
                                 {floors.map(floor => (
                                     <div
                                         key={floor.id}
-                                        className="flex items-center justify-between p-4 bg-card border border-border/60 rounded-xl hover:shadow-sm transition-all group cursor-pointer"
+                                        className="flex items-center justify-between p-4 bg-card border border-border/60 rounded-xl hover:shadow-sm transition-all group/floor cursor-pointer"
                                         onClick={() => openSheet("floor", floor)}
                                     >
                                         <div className="flex items-center gap-4">
@@ -830,7 +830,7 @@ export default function Admin() {
                                                 <p className="text-sm text-muted-foreground">ID: {floor.id}</p>
                                             </div>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); deleteFloor(floor.id); }}>
+                                        <Button variant="ghost" size="icon" className="opacity-0 group-hover/floor:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); deleteFloor(floor.id); }}>
                                             <Trash2 size={16} className="text-destructive" />
                                         </Button>
                                     </div>
