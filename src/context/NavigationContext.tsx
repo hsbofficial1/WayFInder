@@ -135,50 +135,39 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
     // Initialize from LocalStorage or Defaults
     useEffect(() => {
         let active = true;
-        try {
-            const storedLocations = localStorage.getItem("locations_v10");
-            const storedRoutes = localStorage.getItem("routes_v10");
-            const storedFloors = localStorage.getItem("floors_v10");
-            const storedFeedback = localStorage.getItem("feedback");
-            const storedStats = localStorage.getItem("usageStats");
-            const storedMaps = localStorage.getItem("floorMaps");
-            const storedEdges = localStorage.getItem("edges_v10");
 
-            if (active) {
-                if (storedLocations) setLocations(JSON.parse(storedLocations));
-                else {
-                    console.log("Loading initial locations from file:", initialLocations.length);
-                    setLocations(initialLocations); // Fallback to file
-                }
-
-                if (storedRoutes) setRoutes(JSON.parse(storedRoutes));
-                else setRoutes(initialRoutes);
-
-                if (storedFloors) setFloors(JSON.parse(storedFloors));
-                else setFloors(initialFloors);
-
-                if (storedFeedback) setFeedback(JSON.parse(storedFeedback));
-                if (storedStats) setStats(JSON.parse(storedStats));
-                if (storedMaps) setFloorMaps(JSON.parse(storedMaps));
-                if (storedEdges) setEdges(JSON.parse(storedEdges));
-                else setEdges([]);
-
-                setIsInitialized(true);
-                fetchGraphData(); // Fetch from Supabase
+        const loadKey = (key: string, fallback: any) => {
+            try {
+                const stored = localStorage.getItem(key);
+                return stored ? JSON.parse(stored) : fallback;
+            } catch (e) {
+                console.warn(`Failed to load ${key} from localStorage:`, e);
+                return fallback;
             }
-        } catch (e) {
-            console.error("Failed to load state from localStorage:", e);
-            if (active) {
-                setLocations(initialLocations);
-                setRoutes(initialRoutes);
-                setFloors(initialFloors);
-                setIsInitialized(true);
-            }
+        };
+
+        if (active) {
+            setLocations(loadKey("locations_v10", initialLocations));
+            setRoutes(loadKey("routes_v10", initialRoutes));
+            setFloors(loadKey("floors_v10", initialFloors));
+            setFeedback(loadKey("feedback", []));
+            setStats(loadKey("usageStats", {
+                totalNavigations: 0,
+                routesFound: 0,
+                routesNotFound: 0,
+                popularDestinations: {}
+            }));
+            setFloorMaps(loadKey("floorMaps", {}));
+            setEdges(loadKey("edges_v10", []));
+
+            setIsInitialized(true);
+            fetchGraphData(); // Fetch from Supabase
         }
+
         return () => { active = false; };
     }, [fetchGraphData]);
 
-    // CONSOLIDATED AND DEBOUNCED PERSISTENCE
+    // PERSISTENCE FOR HEAVY DATA (Debounced)
     useEffect(() => {
         if (!isInitialized) return;
 
@@ -187,17 +176,26 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
                 localStorage.setItem("locations_v10", JSON.stringify(locations));
                 localStorage.setItem("routes_v10", JSON.stringify(routes));
                 localStorage.setItem("floors_v10", JSON.stringify(floors));
-                localStorage.setItem("feedback", JSON.stringify(feedback));
-                localStorage.setItem("usageStats", JSON.stringify(stats));
                 localStorage.setItem("floorMaps", JSON.stringify(floorMaps));
                 localStorage.setItem("edges_v10", JSON.stringify(edges));
             } catch (e) {
-                console.warn("Storage sync failed (likely quota exceeded or private mode):", e);
+                console.warn("Storage sync (heavy) failed:", e);
             }
-        }, 1000); // 1s debounce for heavy JSON operations
+        }, 2000); // 2s debounce for heavy JSON operations
 
         return () => clearTimeout(timer);
-    }, [locations, routes, floors, feedback, stats, floorMaps, edges, isInitialized]);
+    }, [locations, routes, floors, floorMaps, edges, isInitialized]);
+
+    // PERSISTENCE FOR LIGHT DATA (Immediate)
+    useEffect(() => {
+        if (!isInitialized) return;
+        try {
+            localStorage.setItem("feedback", JSON.stringify(feedback));
+            localStorage.setItem("usageStats", JSON.stringify(stats));
+        } catch (e) {
+            console.warn("Storage sync (light) failed:", e);
+        }
+    }, [feedback, stats, isInitialized]);
 
     const addLocation = useCallback((location: Location) => {
         setLocations(prev => [...prev, location]);
@@ -268,11 +266,14 @@ export const NavigationProvider: FC<{ children: ReactNode }> = ({ children }) =>
             const currentStats = prev || { totalNavigations: 0, routesFound: 0, routesNotFound: 0, popularDestinations: {} };
             const newStats = { ...currentStats };
             newStats.totalNavigations = (newStats.totalNavigations || 0) + 1;
+
             if (success) {
                 newStats.routesFound = (newStats.routesFound || 0) + 1;
                 if (toId) {
-                    if (!newStats.popularDestinations) newStats.popularDestinations = {};
-                    newStats.popularDestinations[toId] = (newStats.popularDestinations[toId] || 0) + 1;
+                    // Create a fresh copy of popularDestinations to avoid mutating the original state
+                    const popular = { ...(currentStats.popularDestinations || {}) };
+                    popular[toId] = (popular[toId] || 0) + 1;
+                    newStats.popularDestinations = popular;
                 }
             } else {
                 newStats.routesNotFound = (newStats.routesNotFound || 0) + 1;
