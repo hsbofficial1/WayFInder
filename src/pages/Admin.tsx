@@ -23,7 +23,9 @@ import {
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
+    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
@@ -697,10 +699,21 @@ export default function Admin() {
                                                     <SelectTrigger className="col-span-3">
                                                         <SelectValue placeholder="Select start node" />
                                                     </SelectTrigger>
-                                                    <SelectContent>
-                                                        {[...graphNodes].sort((a, b) => a.floor.localeCompare(b.floor)).map(node => (
-                                                            <SelectItem key={node.node_id} value={node.node_id}>{node.name} ({node.floor})</SelectItem>
-                                                        ))}
+                                                    <SelectContent className="max-h-80">
+                                                        {['G', 'F1', 'F2'].map(fid => {
+                                                            const nodes = graphNodes.filter(n => n.floor === fid);
+                                                            if (nodes.length === 0) return null;
+                                                            return (
+                                                                <SelectGroup key={fid}>
+                                                                    <SelectLabel className="bg-muted/50 text-[10px] font-bold uppercase py-1 px-2">{fid === 'G' ? 'Ground Floor' : `Floor ${fid}`}</SelectLabel>
+                                                                    {nodes.map(node => (
+                                                                        <SelectItem key={node.node_id} value={node.node_id}>
+                                                                            {node.name}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectGroup>
+                                                            );
+                                                        })}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
@@ -714,10 +727,73 @@ export default function Admin() {
                                                     <SelectTrigger className="col-span-3">
                                                         <SelectValue placeholder="Select end node" />
                                                     </SelectTrigger>
+                                                    <SelectContent className="max-h-80">
+                                                        {['G', 'F1', 'F2'].map(fid => {
+                                                            const nodes = graphNodes.filter(n => n.floor === fid);
+                                                            if (nodes.length === 0) return null;
+                                                            return (
+                                                                <SelectGroup key={fid}>
+                                                                    <SelectLabel className="bg-muted/50 text-[10px] font-bold uppercase py-1 px-2">{fid === 'G' ? 'Ground Floor' : `Floor ${fid}`}</SelectLabel>
+                                                                    {nodes.map(node => (
+                                                                        <SelectItem key={node.node_id} value={node.node_id}>
+                                                                            {node.name}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectGroup>
+                                                            );
+                                                        })}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="edge_type" className="text-right">Type</Label>
+                                                <Select
+                                                    value={edgeForm.edge_type}
+                                                    onValueChange={(val) => setEdgeForm({ ...edgeForm, edge_type: val as EdgeType })}
+                                                >
+                                                    <SelectTrigger className="col-span-3">
+                                                        <SelectValue placeholder="Select type" />
+                                                    </SelectTrigger>
                                                     <SelectContent>
-                                                        {[...graphNodes].sort((a, b) => a.floor.localeCompare(b.floor)).map(node => (
-                                                            <SelectItem key={node.node_id} value={node.node_id}>{node.name} ({node.floor})</SelectItem>
-                                                        ))}
+                                                        <SelectItem value="corridor">Corridor</SelectItem>
+                                                        <SelectItem value="stairs">Stairs</SelectItem>
+                                                        <SelectItem value="lift">Lift</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="turn" className="text-right">Turn / Icon</Label>
+                                                <Select
+                                                    value={edgeForm.turn}
+                                                    onValueChange={(val) => setEdgeForm({ ...edgeForm, turn: val as any })}
+                                                >
+                                                    <SelectTrigger className="col-span-3">
+                                                        <SelectValue placeholder="Select icon" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="straight">Straight</SelectItem>
+                                                        <SelectItem value="left">Left Turn</SelectItem>
+                                                        <SelectItem value="right">Right Turn</SelectItem>
+                                                        <SelectItem value="stairs-up">Stairs Up</SelectItem>
+                                                        <SelectItem value="stairs-down">Stairs Down</SelectItem>
+                                                        <SelectItem value="lift-up">Lift Up</SelectItem>
+                                                        <SelectItem value="lift-down">Lift Down</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="edge_floor" className="text-right">Floor Ref</Label>
+                                                <Select
+                                                    value={edgeForm.floor_id}
+                                                    onValueChange={(val) => setEdgeForm({ ...edgeForm, floor_id: val as FloorId })}
+                                                >
+                                                    <SelectTrigger className="col-span-3">
+                                                        <SelectValue placeholder="Select floor" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="G">Ground</SelectItem>
+                                                        <SelectItem value="F1">First Floor</SelectItem>
+                                                        <SelectItem value="F2">Second Floor</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
